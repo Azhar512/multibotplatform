@@ -1,0 +1,314 @@
+/* CallInterface.css */
+.call-interface {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.call-interface-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.call-interface-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.call-status-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-dot.idle {
+  background-color: #6c757d;
+}
+
+.status-dot.connecting {
+  background-color: #ffc107;
+  animation: pulse 1.5s infinite;
+}
+
+.status-dot.ringing {
+  background-color: #17a2b8;
+  animation: pulse 1s infinite;
+}
+
+.status-dot.in-progress {
+  background-color: #28a745;
+}
+
+.status-dot.ended {
+  background-color: #dc3545;
+}
+
+.status-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.call-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.phone-input-container {
+  display: flex;
+  gap: 10px;
+}
+
+.phone-input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.toggle-dialpad-button {
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-dialpad-button:hover {
+  background-color: #e9ecef;
+}
+
+.dialpad {
+  margin: 15px 0;
+}
+
+.dialpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.dialpad-button {
+  padding: 15px;
+  font-size: 1.2rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dialpad-button:hover {
+  background-color: #e9ecef;
+}
+
+.call-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.call-button:disabled {
+  background-color: #a4d3af;
+  cursor: not-allowed;
+}
+
+.call-icon {
+  font-size: 1.2rem;
+}
+
+.end-call-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.end-call-icon {
+  font-size: 1.2rem;
+}
+
+.call-status-message {
+  text-align: center;
+  padding: 15px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.connecting-animation, .ringing-animation {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.connecting-animation span, .ringing-animation span {
+  width: 10px;
+  height: 10px;
+  background-color: #6c757d;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.connecting-animation span:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.connecting-animation span:nth-child(3) {
+  animation-delay: 1s;
+}
+
+.ringing-animation span:nth-child(2) {
+  animation-delay: 0.75s;
+}
+
+.incoming-call-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.answer-call-button, .reject-call-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.answer-call-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.reject-call-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.active-call-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.call-timer {
+  font-family: monospace;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.in-call-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-mute-button {
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.personality-status {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.personality-status h3 {
+  margin-top: 0;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.personality-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.personality-indicator {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.trait-name {
+  flex: 0 0 120px;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.trait-bar {
+  flex: 1;
+  height: 15px;
+  background-color: #e9ecef;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.trait-fill {
+  height: 100%;
+  transition: width 0.5s ease-in-out;
+}
+
+/* Keyframe animation for pulse effect */
+@keyframes pulse {
+  0% {
+      transform: scale(1);
+      opacity: 0.7;
+  }
+  50% {
+      transform: scale(1.1);
+      opacity: 1;
+  }
+  100% {
+      transform: scale(1);
+      opacity: 0.7;
+  }
+}

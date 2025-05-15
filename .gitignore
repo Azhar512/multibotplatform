@@ -1,0 +1,7 @@
+**/node_modules/ 
+# Ignore environment files containing secrets
+.env
+Backend/.env
+
+# Ignore node_modules folder (optional but recommended)
+node_modules/

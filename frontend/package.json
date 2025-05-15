@@ -1,0 +1,41 @@
+{
+  "name": "multibotplatform",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@huggingface/inference": "^3.1.2",
+    "@twilio/voice-sdk": "^2.12.3",
+    "@xenova/transformers": "^2.17.2",
+    "axios": "^1.7.9",
+    "dotenv-webpack": "^8.1.0",
+    "lucide-react": "^0.462.0",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^7.0.1",
+    "react-scripts": "^5.0.1",
+    "recharts": "^2.13.3",
+    "socket.io-client": "^4.8.1",
+    "twilio-client": "^1.15.1",
+    "util": "^0.12.5",
+    "web-vitals": "^4.2.4"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
