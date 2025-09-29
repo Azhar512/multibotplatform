@@ -1,18 +1,17 @@
-const express = require('express');
+import express from 'express';
+import multer from 'multer';
+import { SpeechClient } from '@google-cloud/speech';
+import { OpenAI } from 'openai';
+import { TextToSpeechClient } from '@google-cloud/text-to-speech';
+import audioStorage from './audioStorage.js';
+
 const router = express.Router();
-const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-const { SpeechClient } = require('@google-cloud/speech');
-const { OpenAI } = require('openai');
-const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
-const audioStorage = require('./audioStorage');
 
 // Initialize clients
 const speechClient = new SpeechClient();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const textToSpeechClient = new TextToSpeechClient();
-
-
 
 // Initialize storage on startup
 audioStorage.initialize().catch(console.error);
@@ -51,10 +50,8 @@ router.post('/bot/response', async (req, res) => {
   try {
     const { message, personality, config } = req.body;
 
-    // Adjust the system message based on personality settings
     const systemMessage = generateSystemMessage(personality);
 
-    // Get response from language model
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -69,7 +66,6 @@ router.post('/bot/response', async (req, res) => {
       audioUrl: null
     };
 
-    // Handle text-to-speech if enabled
     if (config.enableTextToSpeech) {
       const [audioResponse] = await textToSpeechClient.synthesizeSpeech({
         input: { text: botResponse.text },
@@ -77,8 +73,6 @@ router.post('/bot/response', async (req, res) => {
         audioConfig: { audioEncoding: 'MP3' },
       });
 
-      // Here you would need to save the audio file and generate a URL
-      // This is a simplified example - you'd need to implement file storage
       botResponse.audioUrl = await saveAudioAndGetUrl(audioResponse.audioContent);
     }
 
@@ -94,13 +88,10 @@ router.post('/bot/settings', async (req, res) => {
   try {
     const { personality, config } = req.body;
     
-    // Validate settings
     if (!isValidPersonality(personality)) {
       return res.status(400).json({ error: 'Invalid personality settings' });
     }
 
-    // Here you would typically save to a database
-    // For now, we'll just validate and return success
     res.json({ 
       success: true,
       personality,
@@ -111,17 +102,19 @@ router.post('/bot/settings', async (req, res) => {
     res.status(500).json({ error: 'Failed to save settings' });
   }
 });
-// Add cleanup route for old audio files (optional)
+
+// Delete old audio files
 router.delete('/audio/:filename', async (req, res) => {
-    try {
-      const fileUrl = `/audio/${req.params.filename}`;
-      await audioStorage.delete(fileUrl);
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error deleting audio file:', error);
-      res.status(500).json({ error: 'Failed to delete audio file' });
-    }
-  });
+  try {
+    const fileUrl = `/audio/${req.params.filename}`;
+    await audioStorage.delete(fileUrl);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting audio file:', error);
+    res.status(500).json({ error: 'Failed to delete audio file' });
+  }
+});
+
 // Helper functions
 function generateSystemMessage(personality) {
   const formality = personality.formality || 0.5;
@@ -143,11 +136,7 @@ function isValidPersonality(personality) {
 }
 
 async function saveAudioAndGetUrl(audioContent) {
-  // Implement your file storage logic here
-  // This could use local filesystem, cloud storage, etc.
-  // Return the URL where the audio can be accessed
-  // For now, returning a placeholder
-  return '/api/audio/response.mp3';
+  return '/api/audio/response.mp3'; // Replace with actual logic
 }
 
-module.exports = router;
+export default router;

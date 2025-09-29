@@ -30,9 +30,9 @@ import {
   Clock,
   Brain,
   PlaySquare,
+  ChevronRight,
 } from "lucide-react"
 import { dashboardAPI } from "../../services/api"
-import "./Dashboard.css"
 import {
   BotInteraction,
   EmbedOptions,
@@ -42,8 +42,6 @@ import {
   UsersPage,
   SettingsPage,
 } from "../pages"
-// Add the import for StarsBackground at the top of the file
-import StarsBackground from "./StarsBackground.tsx"
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -57,17 +55,17 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Update the THEME object with more vibrant colors
+  // Enhanced theme with gradient colors
   const THEME = {
     primary: "#8b5cf6",
     secondary: "#6366f1",
     accent1: "#06b6d4",
     accent2: "#ec4899",
     accent3: "#10b981",
-    background: "#0f172a",
-    cardBg: "#1e293b",
-    text: "#e2e8f0",
-    textLight: "#94a3b8",
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    cardBg: "rgba(255, 255, 255, 0.1)",
+    text: "#ffffff",
+    textLight: "rgba(255, 255, 255, 0.7)",
     success: "#4ade80",
     warning: "#fbbf24",
     error: "#f87171",
@@ -136,8 +134,7 @@ const Dashboard = () => {
 
     fetchDashboardData()
 
-    const socket = new WebSocket("ws://localhost:5000")
-
+    const socket = new WebSocket(process.env.REACT_APP_WS_URL || "ws://localhost:5000")
     socket.onmessage = (event) => {
       const newData = JSON.parse(event.data)
       if (newData.type === "statsUpdate") {
@@ -165,35 +162,41 @@ const Dashboard = () => {
     { icon: Settings, label: "Settings", path: "/settings" },
   ]
 
-  // Update the renderSidebar function to include the updated styling
   const renderSidebar = () => (
-    <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-      <div className="sidebar-header">
-        {sidebarOpen && <h2 className="logo">AI Bot Platform</h2>}
-        <button className="toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+    <div
+      className={`fixed left-0 top-0 h-full bg-white/10 backdrop-blur-sm border-r border-white/20 transition-all duration-300 z-50 ${
+        sidebarOpen ? "w-64" : "w-16"
+      }`}
+    >
+      <div className="flex items-center justify-between p-4 border-b border-white/20">
+        {sidebarOpen && <h2 className="text-xl font-bold text-white">AI Bot Platform</h2>}
+        <button
+          className="p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
           {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
-      <nav className="nav-menu">
+      <nav className="p-4 space-y-2">
         {navItems.map((item, index) => (
           <div
             key={index}
-            className={`nav-item ${location.pathname === item.path ? "active" : ""}`}
+            className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+              location.pathname === item.path ? "bg-white text-purple-600 shadow-lg" : "text-white hover:bg-white/20"
+            }`}
             onClick={() => navigate(item.path)}
           >
             <item.icon size={20} />
-            {sidebarOpen && <span>{item.label}</span>}
+            {sidebarOpen && <span className="font-medium">{item.label}</span>}
           </div>
         ))}
       </nav>
     </div>
   )
 
-  // Update the renderStats function to include RGB values for accent colors
   const renderStats = () => (
-    <div className="stats-grid">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {dashboardData.stats.map((stat, index) => {
-        // Convert hex to RGB for CSS variables
         const hexToRgb = (hex) => {
           const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
           return result
@@ -204,24 +207,33 @@ const Dashboard = () => {
         return (
           <div
             key={index}
-            className="stat-card"
+            className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6 hover:bg-white/20 transition-all duration-300 group"
             style={{
               "--accent-color": stat.color,
               "--accent-color-rgb": hexToRgb(stat.color),
             }}
           >
-            <div className="stat-header">
-              <span className="stat-title">{stat.title}</span>
-              <div className="stat-icon">
-                <stat.icon size={20} />
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-white/70 text-sm font-medium">{stat.title}</span>
+              <div
+                className="p-2 rounded-lg group-hover:scale-110 transition-transform duration-300"
+                style={{ backgroundColor: `rgba(${hexToRgb(stat.color)}, 0.2)` }}
+              >
+                <stat.icon size={20} style={{ color: stat.color }} />
               </div>
             </div>
-            <div className="stat-value">{stat.value}</div>
-            <div className="stat-change">
-              <span className={`change-badge ${Number.parseFloat(stat.change) >= 0 ? "positive" : "negative"}`}>
+            <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
+            <div className="flex items-center space-x-2">
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  Number.parseFloat(stat.change) >= 0
+                    ? "bg-green-500/20 text-green-100 border border-green-400/30"
+                    : "bg-red-500/20 text-red-100 border border-red-400/30"
+                }`}
+              >
                 {stat.change}
               </span>
-              <span className="change-label">from last month</span>
+              <span className="text-white/50 text-xs">from last month</span>
             </div>
           </div>
         )
@@ -230,26 +242,29 @@ const Dashboard = () => {
   )
 
   const renderChart = (title, children) => (
-    <div className="chart-card">
-      <h3 className="chart-title">{title}</h3>
+    <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6 shadow-2xl">
+      <h3 className="text-xl font-bold text-white mb-6">{title}</h3>
       {children}
     </div>
   )
 
   const renderInteractionTrends = () => (
-    <div className="col-span-2">
+    <div className="lg:col-span-2">
       {renderChart(
         "Interaction Trends",
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={dashboardData.interactionTrends}>
-              <CartesianGrid strokeDasharray="3 3" stroke={`${THEME.textLight}25`} />
-              <XAxis dataKey="_id.date" stroke={THEME.textLight} />
-              <YAxis stroke={THEME.textLight} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="_id.date" stroke="rgba(255,255,255,0.7)" />
+              <YAxis stroke="rgba(255,255,255,0.7)" />
               <Tooltip
                 contentStyle={{
-                  background: THEME.cardBg,
-                  border: `1px solid ${THEME.textLight}25`,
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "12px",
+                  backdropFilter: "blur(10px)",
+                  color: "#ffffff",
                 }}
               />
               <Legend />
@@ -258,9 +273,9 @@ const Dashboard = () => {
                   key={type}
                   type="monotone"
                   dataKey={`_id.${type}`}
-                  stroke={Object.values(THEME)[index]}
-                  strokeWidth={2}
-                  dot={false}
+                  stroke={Object.values(THEME).slice(0, 4)[index]}
+                  strokeWidth={3}
+                  dot={{ fill: Object.values(THEME).slice(0, 4)[index], strokeWidth: 2, r: 4 }}
                 />
               ))}
             </LineChart>
@@ -282,19 +297,22 @@ const Dashboard = () => {
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
-                outerRadius={80}
+                outerRadius={100}
                 fill={THEME.primary}
                 paddingAngle={5}
                 dataKey="value"
               >
                 {dashboardData.channelMetrics.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={Object.values(THEME)[index]} />
+                  <Cell key={`cell-${index}`} fill={Object.values(THEME).slice(0, 4)[index]} />
                 ))}
               </Pie>
               <Tooltip
                 contentStyle={{
-                  background: THEME.cardBg,
-                  border: `1px solid ${THEME.textLight}25`,
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "12px",
+                  backdropFilter: "blur(10px)",
+                  color: "#ffffff",
                 }}
               />
               <Legend />
@@ -317,18 +335,21 @@ const Dashboard = () => {
                 value,
               }))}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke={`${THEME.textLight}25`} />
-              <XAxis dataKey="name" stroke={THEME.textLight} />
-              <YAxis stroke={THEME.textLight} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="name" stroke="rgba(255,255,255,0.7)" />
+              <YAxis stroke="rgba(255,255,255,0.7)" />
               <Tooltip
                 contentStyle={{
-                  background: THEME.cardBg,
-                  border: `1px solid ${THEME.textLight}25`,
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "12px",
+                  backdropFilter: "blur(10px)",
+                  color: "#ffffff",
                 }}
               />
-              <Bar dataKey="value" fill={THEME.primary}>
+              <Bar dataKey="value" fill={THEME.primary} radius={[4, 4, 0, 0]}>
                 {Object.entries(dashboardData.personalityEffectiveness).map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={Object.values(THEME)[index % Object.values(THEME).length]} />
+                  <Cell key={`cell-${index}`} fill={Object.values(THEME).slice(0, 4)[index % 4]} />
                 ))}
               </Bar>
             </BarChart>
@@ -339,40 +360,52 @@ const Dashboard = () => {
   )
 
   const MainDashboard = () => (
-    <div className="dashboard-content">
-      <div className="dashboard-header">
-        <h1 className="dashboard-title">AI Bot Analytics</h1>
-        <div className="header-actions">
-          <button className="notification-btn">
+    <div className="p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-white mb-2">AI Bot Analytics</h1>
+          <p className="text-white/70">Monitor your AI bot performance and user interactions</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <button className="p-3 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors relative">
             <Bell size={20} />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
           </button>
-          <div className="profile-avatar"></div>
+          <div className="flex items-center space-x-2">
+            <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full"></div>
+            <span className="text-white font-medium">Azhar</span>
+            <ChevronRight className="w-4 h-4 text-white" />
+          </div>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="flex items-center justify-center h-64">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+          </div>
         </div>
       ) : (
         <>
           {renderStats()}
-          <div className="charts-grid">
-            <div className="chart-wide">{renderInteractionTrends()}</div>
-            <div className="chart-normal">{renderChannelDistribution()}</div>
-            <div className="chart-normal">{renderPersonalityMetrics()}</div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {renderInteractionTrends()}
+            {renderChannelDistribution()}
+            {renderPersonalityMetrics()}
           </div>
         </>
       )}
     </div>
   )
 
-  // Update the return statement in the Dashboard component to include StarsBackground
   return (
-    <div className="dashboard-container" style={{ background: THEME.background }}>
-      <StarsBackground />
+    <div className="min-h-screen bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 relative">
       {renderSidebar()}
-      <div className={`main-content ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <div className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"}`}>
         <Routes>
           <Route path="/dashboard" element={<MainDashboard />} />
           <Route path="/bot-interaction" element={<BotInteraction />} />
@@ -388,4 +421,5 @@ const Dashboard = () => {
     </div>
   )
 }
+
 export default Dashboard

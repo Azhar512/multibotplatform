@@ -1,5 +1,5 @@
 // models/DashboardStats.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const dashboardStatsSchema = new mongoose.Schema({
   totalInteractions: Number,
@@ -25,4 +25,5 @@ const dashboardStatsSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('DashboardStats', dashboardStatsSchema);
+const DashboardStats = mongoose.model('DashboardStats', dashboardStatsSchema);
+export default DashboardStats;

@@ -1,6 +1,6 @@
-const User = require('../models/User');
+import User from '../models/User.js';
 
-exports.getUsers = async (req, res) => {
+export const getUsers = async (req, res) => {
   try {
     const { search, dateJoined, interactionFrequency, sentiment, page = 1, limit = 10 } = req.query;
     
@@ -50,7 +50,7 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-exports.banUser = async (req, res) => {
+export const banUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
@@ -63,7 +63,7 @@ exports.banUser = async (req, res) => {
   }
 };
 
-exports.deleteUser = async (req, res) => {
+export const deleteUser = async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: 'User deleted successfully' });

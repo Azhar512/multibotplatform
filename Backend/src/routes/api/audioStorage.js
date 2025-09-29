@@ -1,8 +1,14 @@
-const fs = require('fs').promises;
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+import fs from 'fs/promises';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-class audioStorage {
+// For __dirname compatibility in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+class AudioStorage {
   constructor(options = {}) {
     this.baseDir = options.baseDir || path.join(__dirname, '../../storage/audio');
     this.maxSize = options.maxSize || 50 * 1024 * 1024; // 50MB default
@@ -13,11 +19,9 @@ class audioStorage {
 
   async initialize() {
     try {
-      // Create storage directory if it doesn't exist
       await fs.mkdir(this.baseDir, { recursive: true });
-      
-      // Load existing audio files metadata
       const files = await fs.readdir(this.baseDir);
+
       for (const file of files) {
         const stats = await fs.stat(path.join(this.baseDir, file));
         this.metadata.set(file, {
@@ -27,9 +31,7 @@ class audioStorage {
         });
       }
 
-      // Set up cleanup interval (every 24 hours)
       setInterval(() => this.cleanup(), 24 * 60 * 60 * 1000);
-      
       console.log('Audio storage initialized successfully');
       return true;
     } catch (error) {
@@ -60,27 +62,24 @@ class audioStorage {
   async get(id) {
     const files = await fs.readdir(this.baseDir);
     const audioFile = files.find(file => file.startsWith(id));
-    
+
     if (!audioFile) {
       throw new Error('Audio file not found');
     }
 
     const filepath = path.join(this.baseDir, audioFile);
     const data = await fs.readFile(filepath);
-    
-    // Update last accessed time
     this.metadata.get(audioFile).lastAccessed = new Date();
-    
+
     return data;
   }
 
   async cleanup() {
     const now = new Date();
     for (const [filename, meta] of this.metadata.entries()) {
-      // Delete files older than 7 days or not accessed in 3 days
       const ageInDays = (now - meta.created) / (1000 * 60 * 60 * 24);
       const lastAccessedDays = (now - meta.lastAccessed) / (1000 * 60 * 60 * 24);
-      
+
       if (ageInDays > 7 || lastAccessedDays > 3) {
         const filepath = path.join(this.baseDir, filename);
         await fs.unlink(filepath);
@@ -90,4 +89,5 @@ class audioStorage {
   }
 }
 
-module.exports = new audioStorage();
+const audioStorage = new AudioStorage();
+export default audioStorage;

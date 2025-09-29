@@ -1,6 +1,7 @@
-const cron = require('node-cron');
-const Stats = require('../models/DashboardStats');
-const Transaction = require('../models/Transaction');
+// utils/statsScheduler.js (or any appropriate filename)
+import cron from 'node-cron';
+import Stats from '../models/DashboardStats.js';
+import Transaction from '../models/Transaction.js';
 
 // Helper function to calculate percentage change
 const calculatePercentageChange = (current, previous) => {
@@ -9,7 +10,7 @@ const calculatePercentageChange = (current, previous) => {
 };
 
 // Function to update stats
-async function updateStats() {
+export async function updateStats() {
   try {
     console.log('Starting stats update...');
 
@@ -96,7 +97,7 @@ async function updateStats() {
 }
 
 // Initialize scheduled tasks
-function initScheduledTasks() {
+export function initScheduledTasks() {
   // Run every hour
   cron.schedule('0 * * * *', async () => {
     console.log('Running hourly stats update...');
@@ -115,8 +116,3 @@ function initScheduledTasks() {
     await updateStats();
   });
 }
-
-module.exports = {
-  initScheduledTasks,
-  updateStats // Export for manual triggering if needed
-};

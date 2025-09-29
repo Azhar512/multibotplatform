@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+// src/models/User.js
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -39,11 +40,20 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, 10);
   }
   next();
 });
 
-module.exports = mongoose.model('User', UserSchema);
+// Create indexes for performance
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ lastInteraction: -1 });
+UserSchema.index({ status: 1 });
+UserSchema.index({ dateJoined: -1 });
+
+const User = mongoose.model('User', UserSchema);
+
+// ✅ Default export for ESM
+export default User;

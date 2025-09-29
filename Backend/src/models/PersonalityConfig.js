@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const personalityConfigSchema = new mongoose.Schema({
   userId: {
@@ -34,3 +34,5 @@ const personalityConfigSchema = new mongoose.Schema({
     default: 'medium'
   }
 }, { timestamps: true });
+
+export default mongoose.model('PersonalityConfig', personalityConfigSchema);

@@ -1,15 +1,13 @@
-// controllers/dashboardController.js
-const DashboardStats = require('../models/DashboardStats');
-const BotInteraction = require('../models/BotInteraction');
-const User = require('../models/User');
+import DashboardStats from '../models/DashboardStats.js';
+import BotInteraction from '../models/BotInteraction.js';
+import User from '../models/User.js';
 
-exports.getDashboardStats = async (req, res) => {
+const getDashboardStats = async (req, res) => {
   try {
     const currentDate = new Date();
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
 
-    // Aggregate current stats
     const currentStats = await BotInteraction.aggregate([
       {
         $match: {
@@ -43,10 +41,9 @@ exports.getDashboardStats = async (req, res) => {
       }
     ]);
 
-    // Calculate key metrics
     const stats = currentStats[0] || {};
     const activeUsers = await User.countDocuments({ lastActive: { $gte: lastMonth } });
-    
+
     const interactionsByType = stats.interactionsByType?.reduce((acc, type) => {
       acc[type] = (acc[type] || 0) + 1;
       return acc;
@@ -55,11 +52,11 @@ exports.getDashboardStats = async (req, res) => {
     const calculatedStats = {
       totalInteractions: stats.totalInteractions || 0,
       interactionsByType,
-      averageResponseTime: stats.totalInteractions ? 
+      averageResponseTime: stats.totalInteractions ?
         stats.totalResponseTime / stats.totalInteractions : 0,
-      successRate: stats.totalInteractions ? 
+      successRate: stats.totalInteractions ?
         (stats.successfulInteractions / stats.totalInteractions) * 100 : 0,
-      averageUserRating: stats.ratingCount ? 
+      averageUserRating: stats.ratingCount ?
         stats.totalRating / stats.ratingCount : 0,
       activeUsers,
       personalityMetrics: stats.averagePersonality || {
@@ -70,21 +67,20 @@ exports.getDashboardStats = async (req, res) => {
       }
     };
 
-    // Save current stats
     await DashboardStats.create(calculatedStats);
 
     res.json(calculatedStats);
 
   } catch (error) {
     console.error('Error in getDashboardStats:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch dashboard stats' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch dashboard stats'
     });
   }
 };
 
-exports.getInteractionTrends = async (req, res) => {
+const getInteractionTrends = async (req, res) => {
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -116,14 +112,14 @@ exports.getInteractionTrends = async (req, res) => {
     res.json(trends);
   } catch (error) {
     console.error('Error in getInteractionTrends:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch interaction trends' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch interaction trends'
     });
   }
 };
 
-exports.getPersonalityEffectiveness = async (req, res) => {
+const getPersonalityEffectiveness = async (req, res) => {
   try {
     const effectiveness = await BotInteraction.aggregate([
       {
@@ -143,8 +139,8 @@ exports.getPersonalityEffectiveness = async (req, res) => {
             $avg: {
               $multiply: ["$personalitySettings.formality", "$feedback.rating"]
             }
-          },
-          // ... other personality metrics
+          }
+          // Add other metrics as needed
         }
       }
     ]);
@@ -152,9 +148,15 @@ exports.getPersonalityEffectiveness = async (req, res) => {
     res.json(effectiveness[0] || {});
   } catch (error) {
     console.error('Error in getPersonalityEffectiveness:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch personality effectiveness' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch personality effectiveness'
     });
   }
+};
+
+export default {
+  getDashboardStats,
+  getInteractionTrends,
+  getPersonalityEffectiveness
 };

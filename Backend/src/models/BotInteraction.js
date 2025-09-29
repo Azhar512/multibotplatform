@@ -1,5 +1,5 @@
 // models/BotInteraction.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const botInteractionSchema = new mongoose.Schema({
   userId: {
@@ -31,4 +31,11 @@ const botInteractionSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('BotInteraction', botInteractionSchema);
+// Create indexes for performance
+botInteractionSchema.index({ userId: 1, createdAt: -1 });
+botInteractionSchema.index({ interactionType: 1 });
+botInteractionSchema.index({ successful: 1 });
+botInteractionSchema.index({ createdAt: -1 });
+
+const BotInteraction = mongoose.model('BotInteraction', botInteractionSchema);
+export default BotInteraction;

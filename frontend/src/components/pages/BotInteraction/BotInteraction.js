@@ -1,14 +1,13 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { ChevronRight, MessageSquare, Phone, Settings, Mic, MicOff, Send, Bot, Users, Zap } from "lucide-react"
 import { botAPI } from "../../../services/api.js"
 import ChatWindow from "./ChatWindow"
-import VoiceControls from "./VoiceControls"
 import CallInterface from "./CallInterface.js"
 import CrmPanel from "./CrmPanel"
 import { twilioAPI } from "../../../services/api.js"
 import { Device } from "@twilio/voice-sdk"
-import "./BotInteraction.css"
 
 const INDUSTRY_PRESETS = {
   general: {
@@ -55,7 +54,7 @@ const AVAILABLE_MODELS = [
   { value: "bert-base-cased", label: "BERT Base Cased" },
   { value: "bert-large-cased", label: "BERT Large Cased" },
   { value: "distilbert-base-uncased", label: "DistilBERT Base Uncased" },
-  { value: "gpt-4-turbo", label: "GPT-4 Turbo" }, // Added OpenAI model
+  { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
 ]
 
 const VOICE_OPTIONS = [
@@ -85,11 +84,9 @@ const BotInteraction = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [apiStatus, setApiStatus] = useState({ isConnected: false, lastChecked: null })
-
   const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].value)
   const [selectedIndustry, setSelectedIndustry] = useState("general")
   const [personalitySettings, setPersonalitySettings] = useState(INDUSTRY_PRESETS.general)
-
   const [isRecording, setIsRecording] = useState(false)
   const [botConfig, setBotConfig] = useState({
     responseDelay: 1000,
@@ -147,7 +144,6 @@ const BotInteraction = () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop()
       }
-
       // Clean up Twilio device on unmount
       if (twilioDeviceRef.current) {
         twilioDeviceRef.current.destroy()
@@ -161,17 +157,14 @@ const BotInteraction = () => {
 
     try {
       console.log("Getting Twilio token...")
+      const result = await twilioAPI.getToken()
 
-      const response = await twilioAPI.getToken()
-      console.log("Token response:", response)
-
-      if (!response.success) {
-        throw new Error(response.error || "Failed to get Twilio token")
+      if (!result.success) {
+        console.error("Token fetch failed:", result.error)
+        throw new Error(`Failed to get Twilio token: ${result.error}`)
       }
 
-      // Extract the token, ensuring it's a string
-      const twilioToken = response.data?.token
-
+      const twilioToken = result.data?.token
       if (typeof twilioToken !== "string" || !twilioToken) {
         console.error("Invalid token format:", twilioToken)
         throw new Error(`Invalid token format: ${typeof twilioToken}`)
@@ -179,10 +172,9 @@ const BotInteraction = () => {
 
       console.log("Token value preview:", twilioToken.substring(0, 10) + "...")
 
-      // Create a new Device instance with the token directly
       twilioDeviceRef.current = new Device(twilioToken, {
         debug: true,
-        logLevel: "debug", // Add this line
+        logLevel: "debug",
         codecPreferences: ["opus", "pcmu"],
         enableRingingState: true,
       })
@@ -190,9 +182,6 @@ const BotInteraction = () => {
       // Set up event handlers
       twilioDeviceRef.current.on("error", (error) => {
         console.error("Twilio device error:", error)
-        console.error("Error code:", error.code)
-        console.error("Error message:", error.message)
-        console.error("Error context:", error.twilioError)
         setError(`Call system error: ${error.message || "Unknown error"} (Code: ${error.code})`)
       })
 
@@ -218,6 +207,7 @@ const BotInteraction = () => {
       setError(`Failed to initialize call system: ${error.message}`)
     }
   }
+
   const checkApiConnection = async () => {
     try {
       const response = await fetch("/api/health-check", {
@@ -225,6 +215,7 @@ const BotInteraction = () => {
           Authorization: `Bearer ${getAuthToken()}`,
         },
       })
+
       if (!response.ok) throw new Error("API health check failed")
 
       setApiStatus({
@@ -287,7 +278,6 @@ const BotInteraction = () => {
     try {
       setCallStatus("connecting")
 
-      // Send personality and voice settings to backend
       const params = {
         To: phoneNumber,
         personalitySettings: JSON.stringify(personalitySettings),
@@ -296,7 +286,6 @@ const BotInteraction = () => {
       }
 
       const call = await twilioDeviceRef.current.connect({ params })
-
       currentCallRef.current = call
 
       setCallData({
@@ -317,7 +306,6 @@ const BotInteraction = () => {
         }
       })
 
-      // If CRM is enabled, fetch customer data
       if (crmConfig.enabled && crmConfig.displayCustomerData) {
         fetchCustomerData(phoneNumber)
       }
@@ -339,7 +327,6 @@ const BotInteraction = () => {
     if (currentCallRef.current) {
       currentCallRef.current.disconnect()
       setCallStatus("ended")
-
       if (crmConfig.enabled && crmConfig.autoLog) {
         generateCallSummary()
       }
@@ -391,7 +378,6 @@ const BotInteraction = () => {
       const summary = await response.json()
       setCallSummary(summary)
 
-      // Log to CRM if enabled
       if (crmConfig.enabled && crmConfig.autoLog) {
         logCallToCrm(summary)
       }
@@ -463,8 +449,6 @@ const BotInteraction = () => {
     try {
       const formData = new FormData()
       formData.append("audio", audioBlob)
-
-      // Add personality settings to the request
       formData.append("personalitySettings", JSON.stringify(personalitySettings))
       formData.append("modelType", selectedModel)
 
@@ -508,7 +492,7 @@ const BotInteraction = () => {
     setMessages((prev) => [...prev, newMessage])
     setCurrentMessage("")
     setIsLoading(true)
-    setError(null) // Clear any previous errors
+    setError(null)
 
     try {
       let result
@@ -524,11 +508,27 @@ const BotInteraction = () => {
         result = await botAPI.getBertResponse(text, personalitySettings, selectedModel, botConfig)
       }
 
+      console.log("API response:", result)
+
       if (!result.success) {
         throw new Error(result.error || "Failed to get response")
       }
 
-      const { botResponse, confidence, sentiment } = result.data
+      let botResponse, confidence, sentiment
+
+      if (result.data) {
+        botResponse = result.data.botResponse || result.data.text || "No response text"
+        confidence = result.data.confidence || 0.5
+        sentiment = result.data.sentiment || null
+      } else if (typeof result === "object") {
+        botResponse = result.botResponse || result.text || "No response text"
+        confidence = result.confidence || 0.5
+        sentiment = result.sentiment || null
+      } else {
+        botResponse = "Received response in unexpected format"
+        confidence = 0.3
+        sentiment = null
+      }
 
       const botMessage = {
         id: Date.now() + 1,
@@ -540,15 +540,14 @@ const BotInteraction = () => {
       }
 
       setMessages((prev) => [...prev, botMessage])
+      setError(null)
 
-      // If text-to-speech is enabled, play the response
       if (botConfig.enableTextToSpeech) {
         playTextToSpeech(botResponse)
       }
     } catch (error) {
       console.error("Bot response error:", error)
       setError(error.message || "Failed to get bot response. Please try again.")
-
       setMessages((prev) => [
         ...prev,
         {
@@ -591,252 +590,334 @@ const BotInteraction = () => {
   }
 
   return (
-    <div className="bot-interaction-container">
-      {!apiStatus.isConnected && (
-        <div className="alert alert-error mb-4">
-          <p>API connection is unavailable. Please check your connection and login status.</p>
-        </div>
-      )}
-
-      <div className="mode-tabs">
-        <button
-          className={`tab-button ${activeMode === "chat" ? "active" : ""}`}
-          onClick={() => handleModeChange("chat")}
-        >
-          Chat Mode
-        </button>
-        <button
-          className={`tab-button ${activeMode === "call" ? "active" : ""}`}
-          onClick={() => handleModeChange("call")}
-        >
-          Call Mode
-        </button>
-      </div>
-
-      <div className="settings-panel">
-        {/* Model selection dropdown - only visible in chat mode */}
-        {activeMode === "chat" && (
-          <div className="model-selection">
-            <h2>Model Selection</h2>
-            <select
-              value={selectedModel}
-              onChange={handleModelChange}
-              className="model-select"
-              disabled={!apiStatus.isConnected}
-            >
-              {AVAILABLE_MODELS.map((model) => (
-                <option key={model.value} value={model.value}>
-                  {model.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {isOpenAIModel && activeMode === "chat" && (
-          <div className="voice-selection">
-            <h2>Voice Selection</h2>
-            <select
-              value={selectedVoice}
-              onChange={handleVoiceChange}
-              className="voice-select"
-              disabled={!apiStatus.isConnected}
-            >
-              {VOICE_OPTIONS.map((voice) => (
-                <option key={voice.value} value={voice.value}>
-                  {voice.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {!isDeepSeekModel && (
-          <div className="industry-selection">
-            <h2>Industry Preset</h2>
-            <select
-              value={selectedIndustry}
-              onChange={handleIndustryChange}
-              className="industry-select"
-              disabled={!apiStatus.isConnected}
-            >
-              {Object.keys(INDUSTRY_PRESETS).map((industry) => (
-                <option key={industry} value={industry}>
-                  {industry.charAt(0).toUpperCase() + industry.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="personality-settings">
-          <h2>Personality Settings</h2>
-          <div className="personality-sliders">
-            {Object.entries(personalitySettings).map(([trait, value]) => (
-              <div key={trait} className="slider-group">
-                <label>{trait}</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={value}
-                  onChange={(e) => handlePersonalityChange(trait, e.target.value)}
-                  className="personality-slider"
-                  disabled={!apiStatus.isConnected}
-                />
-                <span>{value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {activeMode === "call" && (
-          <div className="crm-config">
-            <h2>CRM Integration</h2>
-            <select
-              value={crmConfig.system}
-              onChange={handleCrmSystemChange}
-              className="crm-select"
-              disabled={!apiStatus.isConnected}
-            >
-              {CRM_SYSTEMS.map((system) => (
-                <option key={system.value} value={system.value}>
-                  {system.label}
-                </option>
-              ))}
-            </select>
-
-            {crmConfig.system !== "none" && (
-              <div className="crm-options">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={crmConfig.autoLog}
-                    onChange={() =>
-                      setCrmConfig((prev) => ({
-                        ...prev,
-                        autoLog: !prev.autoLog,
-                      }))
-                    }
-                    disabled={!apiStatus.isConnected}
-                  />
-                  Auto-log calls to CRM
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={crmConfig.displayCustomerData}
-                    onChange={() =>
-                      setCrmConfig((prev) => ({
-                        ...prev,
-                        displayCustomerData: !prev.displayCustomerData,
-                      }))
-                    }
-                    disabled={!apiStatus.isConnected}
-                  />
-                  Display customer data
-                </label>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="bot-config">
-          <h2>Bot Configuration</h2>
-          <label>
-            <input
-              type="checkbox"
-              checked={botConfig.enableVoice}
-              onChange={() =>
-                setBotConfig((prev) => ({
-                  ...prev,
-                  enableVoice: !prev.enableVoice,
-                }))
-              }
-              disabled={!apiStatus.isConnected}
-            />
-            Enable Voice Input
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={botConfig.enableTextToSpeech}
-              onChange={() =>
-                setBotConfig((prev) => ({
-                  ...prev,
-                  enableTextToSpeech: !prev.enableTextToSpeech,
-                }))
-              }
-              disabled={!apiStatus.isConnected}
-            />
-            Enable Text-to-Speech
-          </label>
-        </div>
-      </div>
-
-      <div className="main-interface">
-        {activeMode === "chat" ? (
-          <>
-            <ChatWindow messages={messages} isLoading={isLoading} error={error} />
-
-            <div className="input-controls">
-              <input
-                type="text"
-                value={currentMessage}
-                onChange={(e) => setCurrentMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="message-input"
-                disabled={isLoading || !apiStatus.isConnected}
-              />
-              <button
-                onClick={() => handleMessageSubmit(currentMessage)}
-                className="send-button"
-                disabled={!currentMessage.trim() || isLoading || !apiStatus.isConnected}
-              >
-                {isLoading ? "Sending..." : "Send"}
-              </button>
-
-              {botConfig.enableVoice && (
-                <VoiceControls
-                  isRecording={isRecording}
-                  onStartRecording={startRecording}
-                  onStopRecording={stopRecording}
-                  disabled={isLoading || !apiStatus.isConnected}
-                />
-              )}
+    <div className="min-h-screen bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">
+      {/* Header */}
+      <header className="bg-white/10 backdrop-blur-sm border-b border-white/20 px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Bot className="w-8 h-8 text-white" />
+            <div>
+              <h1 className="text-2xl font-bold text-white">Bot Interaction</h1>
+              <p className="text-white/70">AI-powered chat and call interface</p>
             </div>
-          </>
-        ) : (
-          <div className="call-interface-container">
-            <CallInterface
-              callStatus={callStatus}
-              callData={callData}
-              onInitiateCall={initiateCall}
-              onAnswerCall={answerCall}
-              onEndCall={endCall}
-              personalitySettings={personalitySettings}
-              disabled={!apiStatus.isConnected}
-            />
+          </div>
+          <div className="flex items-center space-x-4">
+            {!apiStatus.isConnected && (
+              <div className="bg-red-500/20 text-red-100 px-3 py-1 rounded-full text-sm border border-red-400/30">
+                API Disconnected
+              </div>
+            )}
+            <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full"></div>
+            <span className="text-white font-medium">Azhar</span>
+            <ChevronRight className="w-4 h-4 text-white" />
+          </div>
+        </div>
+      </header>
 
-            {crmConfig.enabled && crmConfig.system !== "none" && (
-              <div className="crm-container">
-                <CrmPanel
-                  customerData={customerData}
-                  callSummary={callSummary}
-                  system={crmConfig.system}
-                  callInProgress={callStatus === "in-progress"}
-                />
+      <div className="px-8 py-8">
+        {/* API Connection Alert */}
+        {!apiStatus.isConnected && (
+          <div className="bg-red-500/20 backdrop-blur-sm rounded-xl border border-red-400/30 p-4 mb-6">
+            <p className="text-red-100">
+              API connection is unavailable. Please check your connection and login status.
+            </p>
+          </div>
+        )}
+
+        {/* Mode Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
+            <button
+              onClick={() => handleModeChange("chat")}
+              className={`px-6 py-3 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
+                activeMode === "chat" ? "bg-white text-purple-600 shadow-lg" : "text-white hover:bg-white/10"
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Chat Mode</span>
+            </button>
+            <button
+              onClick={() => handleModeChange("call")}
+              className={`px-6 py-3 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
+                activeMode === "call" ? "bg-white text-purple-600 shadow-lg" : "text-white hover:bg-white/10"
+              }`}
+            >
+              <Phone className="w-4 h-4" />
+              <span>Call Mode</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Settings Panel */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Model Selection - only visible in chat mode */}
+            {activeMode === "chat" && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Settings className="w-5 h-5 text-white" />
+                  <h2 className="text-lg font-bold text-white">Model Selection</h2>
+                </div>
+                <select
+                  value={selectedModel}
+                  onChange={handleModelChange}
+                  disabled={!apiStatus.isConnected}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm"
+                >
+                  {AVAILABLE_MODELS.map((model) => (
+                    <option key={model.value} value={model.value} className="bg-purple-800 text-white">
+                      {model.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Voice Selection - only for OpenAI models in chat mode */}
+            {isOpenAIModel && activeMode === "chat" && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                <h2 className="text-lg font-bold text-white mb-4">Voice Selection</h2>
+                <select
+                  value={selectedVoice}
+                  onChange={handleVoiceChange}
+                  disabled={!apiStatus.isConnected}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm"
+                >
+                  {VOICE_OPTIONS.map((voice) => (
+                    <option key={voice.value} value={voice.value} className="bg-purple-800 text-white">
+                      {voice.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Industry Selection - not for DeepSeek */}
+            {!isDeepSeekModel && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                <h2 className="text-lg font-bold text-white mb-4">Industry Preset</h2>
+                <select
+                  value={selectedIndustry}
+                  onChange={handleIndustryChange}
+                  disabled={!apiStatus.isConnected}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm"
+                >
+                  {Object.keys(INDUSTRY_PRESETS).map((industry) => (
+                    <option key={industry} value={industry} className="bg-purple-800 text-white">
+                      {industry.charAt(0).toUpperCase() + industry.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Personality Settings */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+              <h2 className="text-lg font-bold text-white mb-4">Personality Settings</h2>
+              <div className="space-y-4">
+                {Object.entries(personalitySettings).map(([trait, value]) => (
+                  <div key={trait} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-white font-medium text-sm">{trait}</label>
+                      <span className="text-white/70 text-sm font-medium">{value}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={value}
+                      onChange={(e) => handlePersonalityChange(trait, e.target.value)}
+                      disabled={!apiStatus.isConnected}
+                      className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                      style={{
+                        background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${value}%, rgba(255,255,255,0.2) ${value}%, rgba(255,255,255,0.2) 100%)`,
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CRM Configuration - only in call mode */}
+            {activeMode === "call" && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Users className="w-5 h-5 text-white" />
+                  <h2 className="text-lg font-bold text-white">CRM Integration</h2>
+                </div>
+                <select
+                  value={crmConfig.system}
+                  onChange={handleCrmSystemChange}
+                  disabled={!apiStatus.isConnected}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm mb-4"
+                >
+                  {CRM_SYSTEMS.map((system) => (
+                    <option key={system.value} value={system.value} className="bg-purple-800 text-white">
+                      {system.label}
+                    </option>
+                  ))}
+                </select>
+
+                {crmConfig.system !== "none" && (
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-2 text-white">
+                      <input
+                        type="checkbox"
+                        checked={crmConfig.autoLog}
+                        onChange={() =>
+                          setCrmConfig((prev) => ({
+                            ...prev,
+                            autoLog: !prev.autoLog,
+                          }))
+                        }
+                        disabled={!apiStatus.isConnected}
+                        className="w-4 h-4 text-purple-600 bg-white/20 border-white/30 rounded focus:ring-purple-500"
+                      />
+                      <span className="text-sm">Auto-log calls to CRM</span>
+                    </label>
+                    <label className="flex items-center space-x-2 text-white">
+                      <input
+                        type="checkbox"
+                        checked={crmConfig.displayCustomerData}
+                        onChange={() =>
+                          setCrmConfig((prev) => ({
+                            ...prev,
+                            displayCustomerData: !prev.displayCustomerData,
+                          }))
+                        }
+                        disabled={!apiStatus.isConnected}
+                        className="w-4 h-4 text-purple-600 bg-white/20 border-white/30 rounded focus:ring-purple-500"
+                      />
+                      <span className="text-sm">Display customer data</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bot Configuration */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <Zap className="w-5 h-5 text-white" />
+                <h2 className="text-lg font-bold text-white">Bot Configuration</h2>
+              </div>
+              <div className="space-y-3">
+                <label className="flex items-center space-x-2 text-white">
+                  <input
+                    type="checkbox"
+                    checked={botConfig.enableVoice}
+                    onChange={() =>
+                      setBotConfig((prev) => ({
+                        ...prev,
+                        enableVoice: !prev.enableVoice,
+                      }))
+                    }
+                    disabled={!apiStatus.isConnected}
+                    className="w-4 h-4 text-purple-600 bg-white/20 border-white/30 rounded focus:ring-purple-500"
+                  />
+                  <span className="text-sm">Enable Voice Input</span>
+                </label>
+                <label className="flex items-center space-x-2 text-white">
+                  <input
+                    type="checkbox"
+                    checked={botConfig.enableTextToSpeech}
+                    onChange={() =>
+                      setBotConfig((prev) => ({
+                        ...prev,
+                        enableTextToSpeech: !prev.enableTextToSpeech,
+                      }))
+                    }
+                    disabled={!apiStatus.isConnected}
+                    className="w-4 h-4 text-purple-600 bg-white/20 border-white/30 rounded focus:ring-purple-500"
+                  />
+                  <span className="text-sm">Enable Text-to-Speech</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Interface */}
+          <div className="lg:col-span-2">
+            {activeMode === "chat" ? (
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                <ChatWindow messages={messages} isLoading={isLoading} error={error} />
+
+                <div className="flex items-center space-x-4 mt-6">
+                  <input
+                    type="text"
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    placeholder="Type your message..."
+                    disabled={isLoading || !apiStatus.isConnected}
+                    className="flex-1 bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault()
+                        handleMessageSubmit(currentMessage)
+                      }
+                    }}
+                  />
+
+                  <button
+                    onClick={() => handleMessageSubmit(currentMessage)}
+                    disabled={!currentMessage.trim() || isLoading || !apiStatus.isConnected}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all shadow-lg flex items-center space-x-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{isLoading ? "Sending..." : "Send"}</span>
+                  </button>
+
+                  {botConfig.enableVoice && (
+                    <button
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isLoading || !apiStatus.isConnected}
+                      className={`p-3 rounded-lg font-medium transition-all shadow-lg ${
+                        isRecording
+                          ? "bg-red-500 hover:bg-red-600 text-white"
+                          : "bg-white/20 hover:bg-white/30 text-white border border-white/30"
+                      }`}
+                    >
+                      {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                  <CallInterface
+                    callStatus={callStatus}
+                    callData={callData}
+                    onInitiateCall={initiateCall}
+                    onAnswerCall={answerCall}
+                    onEndCall={endCall}
+                    personalitySettings={personalitySettings}
+                    disabled={!apiStatus.isConnected}
+                  />
+                </div>
+
+                {crmConfig.enabled && crmConfig.system !== "none" && (
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                    <CrmPanel
+                      customerData={customerData}
+                      callSummary={callSummary}
+                      system={crmConfig.system}
+                      callInProgress={callStatus === "in-progress"}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/20 backdrop-blur-sm rounded-xl border border-red-400/30 p-4 mt-6">
+            <p className="text-red-100">{error}</p>
+          </div>
         )}
       </div>
-
-      {error && (
-        <div className="alert alert-error mt-4">
-          <p>{error}</p>
-        </div>
-      )}
     </div>
   )
 }
