@@ -22,7 +22,6 @@ import { validateUserRegistration, validateUserLogin, sanitizeInput } from './sr
 
 const app = express();
 const server = http.createServer(app);
-const io = initSocket(server);
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -327,6 +326,9 @@ function getLocalIP() {
   return 'localhost';
 }
 
+// Initialize Socket.io
+const io = initSocket(server);
+
 // Start server
 const PORT = process.env.PORT || 5000;
 const currentIP = getLocalIP();
@@ -337,17 +339,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Web can connect to: http://localhost:${PORT}`);
   console.log(`🧪 Test endpoint: http://${currentIP}:${PORT}/api/test`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-
-// Socket.io connection
-io.on('connection', (socket) => {
-  console.log('👤 Client connected:', socket.id);
-  
-  socket.on('disconnect', () => {
-    console.log('👋 Client disconnected:', socket.id);
-  });
-  
-  // Add any other socket event handlers here
+  console.log(`🔌 Socket.io ready for real-time connections`);
 });
 
 // Graceful shutdown
