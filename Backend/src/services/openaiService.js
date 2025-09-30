@@ -1,6 +1,6 @@
-const { OpenAI } = require('openai');
-const PersonalityProcessor = require('../utils/personalityProcessor');
-const axios = require('axios');
+import { OpenAI } from 'openai';
+import PersonalityProcessor from '../utils/personalityProcessor.js';
+import axios from 'axios';
 
 class OpenAIService {
   constructor() {
@@ -129,4 +129,5 @@ class OpenAIService {
   }
 }
 
-module.exports = new OpenAIService();
+const openaiService = new OpenAIService();
+export default openaiService;

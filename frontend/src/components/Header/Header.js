@@ -63,7 +63,7 @@ const Header = () => {
             <div className={styles.logoBox}>
               <span>A</span>
             </div>
-            <h1>Analytics Depot</h1>
+            <h1>CallSync</h1>
           </div>
 
           {/* Search Bar */}

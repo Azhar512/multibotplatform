@@ -14,8 +14,10 @@ import {
   Building,
   Zap,
 } from "lucide-react"
+import { useUser } from "../../../contexts/UserContext"
 
 const ScenarioPanel = () => {
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState("assumptions")
 
   const scenarios = [
@@ -74,8 +76,12 @@ const ScenarioPanel = () => {
               <span className="text-white text-sm">🔔</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full"></div>
-              <span className="text-white font-medium">Azhar</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xs">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </span>
+              </div>
+              <span className="text-white font-medium">{user?.name || 'User'}</span>
               <ChevronRight className="w-4 h-4 text-white" />
             </div>
           </div>
@@ -239,7 +245,7 @@ const ScenarioPanel = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-1">
-              <h3 className="text-white text-xl font-bold mb-4">Analytics Depot</h3>
+              <h3 className="text-white text-xl font-bold mb-4">CallSync</h3>
               <p className="text-white/70 mb-6">
                 Empowering businesses with advanced analytics and AI integration solutions.
               </p>
@@ -339,7 +345,7 @@ const ScenarioPanel = () => {
           </div>
 
           <div className="border-t border-white/20 mt-8 pt-8 text-center">
-            <p className="text-white/70">© 2024 Analytics Depot. All rights reserved.</p>
+            <p className="text-white/70">© 2024 CallSync. All rights reserved.</p>
           </div>
         </div>
       </footer>

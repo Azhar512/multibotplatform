@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../contexts/UserContext';
 import './AuthPage.css';
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { login, register } = useUser();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -25,27 +27,15 @@ const AuthPage = () => {
       return;
     }
 
-   try {
-  const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/${isLogin ? 'login' : 'register'}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password
-    }),
-  });
+    try {
+      const response = isLogin 
+        ? await login({ email: formData.email, password: formData.password })
+        : await register({ name: formData.name, email: formData.email, password: formData.password });
 
-  const data = await response.json();
-  
-
-
-      if (!response.ok) throw new Error(data.error || 'Authentication failed');
-
-      if (data.token) {
-        localStorage.setItem('token', data.token);
+      if (response.success) {
         navigate('/');
+      } else {
+        setError(response.error || 'Authentication failed');
       }
     } catch (err) {
       setError(err.message);

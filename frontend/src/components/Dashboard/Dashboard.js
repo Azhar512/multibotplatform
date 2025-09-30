@@ -33,6 +33,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { dashboardAPI } from "../../services/api"
+import { useUser } from "../../contexts/UserContext"
 import {
   BotInteraction,
   EmbedOptions,
@@ -44,6 +45,7 @@ import {
 } from "../pages"
 
 const Dashboard = () => {
+  const { user } = useUser()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [dashboardData, setDashboardData] = useState({
     stats: [],
@@ -373,8 +375,12 @@ const Dashboard = () => {
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
           </button>
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full"></div>
-            <span className="text-white font-medium">Azhar</span>
+            <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </span>
+            </div>
+            <span className="text-white font-medium">{user?.name || 'User'}</span>
             <ChevronRight className="w-4 h-4 text-white" />
           </div>
         </div>

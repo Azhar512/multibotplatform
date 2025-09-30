@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { ChevronRight, Upload, Plus, Trash2, Save, RotateCcw, Settings, Bot, MessageSquare, Zap } from "lucide-react"
+import { useUser } from "../../../contexts/UserContext"
 
 const PersonalitySettings = () => {
+  const { user } = useUser()
   // Core personality settings
   const [tone, setTone] = useState("friendly")
   const [formalityLevel, setFormalityLevel] = useState(50)
@@ -199,8 +201,12 @@ const PersonalitySettings = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full"></div>
-            <span className="text-white font-medium">Azhar</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </span>
+            </div>
+            <span className="text-white font-medium">{user?.name || 'User'}</span>
             <ChevronRight className="w-4 h-4 text-white" />
           </div>
         </div>

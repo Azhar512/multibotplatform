@@ -1,11 +1,14 @@
-const express = require('express');
-const multer = require('multer');
-const botController = require('../controllers/botController');
+import express from 'express';
+import multer from 'multer';
+import { handleBotResponse, handleSpeechToText } from '../controllers/botController.js';
 
 const router = express.Router();
 const upload = multer();
 
-router.post('/bot/response', botController.getBotResponse);
-router.post('/speech-to-text', upload.single('audio'), botController.speechToText);
+// Bot response endpoint
+router.post('/response', handleBotResponse);
 
-module.exports = router;
+// Speech to text endpoint
+router.post('/speech-to-text', upload.single('audio'), handleSpeechToText);
+
+export default router;

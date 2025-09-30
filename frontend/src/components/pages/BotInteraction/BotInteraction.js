@@ -8,6 +8,8 @@ import CallInterface from "./CallInterface.js"
 import CrmPanel from "./CrmPanel"
 import { twilioAPI } from "../../../services/api.js"
 import { Device } from "@twilio/voice-sdk"
+import { useUser } from "../../../contexts/UserContext"
+import io from "socket.io-client"
 
 const INDUSTRY_PRESETS = {
   general: {
@@ -78,6 +80,7 @@ const getAuthToken = () => {
 }
 
 const BotInteraction = () => {
+  const { user } = useUser()
   // State Management
   const [messages, setMessages] = useState([])
   const [currentMessage, setCurrentMessage] = useState("")
@@ -118,11 +121,12 @@ const BotInteraction = () => {
   const audioChunksRef = useRef([])
   const twilioDeviceRef = useRef(null)
   const currentCallRef = useRef(null)
+  const socketRef = useRef(null)
 
   const isDeepSeekModel = selectedModel === "deepseek-r1"
   const isOpenAIModel = selectedModel === "gpt-4-turbo"
 
-  // Initialize Audio Context and Check Auth
+  // Initialize Audio Context, Socket.io, and Check Auth
   useEffect(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
@@ -138,6 +142,7 @@ const BotInteraction = () => {
       })
     } else {
       checkApiConnection()
+      initializeSocket()
     }
 
     return () => {
@@ -148,8 +153,61 @@ const BotInteraction = () => {
       if (twilioDeviceRef.current) {
         twilioDeviceRef.current.destroy()
       }
+      // Clean up Socket.io connection
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+      }
     }
   }, [])
+
+  // Initialize Socket.io connection
+  const initializeSocket = () => {
+    const token = getAuthToken()
+    if (!token) return
+
+    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
+      auth: {
+        token: token
+      }
+    })
+
+    socketRef.current = socket
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id)
+      setApiStatus(prev => ({
+        ...prev,
+        isConnected: true,
+        lastChecked: new Date()
+      }))
+    })
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected')
+      setApiStatus(prev => ({
+        ...prev,
+        isConnected: false,
+        lastChecked: new Date()
+      }))
+    })
+
+    socket.on('bot_response', (data) => {
+      console.log('Real-time bot response:', data)
+      // Handle real-time bot responses if needed
+    })
+
+    socket.on('error', (error) => {
+      console.error('Socket error:', error)
+      setError(error.message)
+    })
+
+    socket.on('interaction_update', (data) => {
+      console.log('Interaction update:', data)
+      // Handle real-time interaction updates
+    })
+
+    return socket
+  }
 
   // Initialize Twilio Device
   const initializeTwilioDevice = async () => {
@@ -541,6 +599,16 @@ const BotInteraction = () => {
 
       setMessages((prev) => [...prev, botMessage])
       setError(null)
+
+      // Emit real-time event for analytics
+      if (socketRef.current) {
+        socketRef.current.emit('bot_message', {
+          message: text,
+          response: botResponse,
+          model: selectedModel,
+          timestamp: new Date().toISOString()
+        })
+      }
 
       if (botConfig.enableTextToSpeech) {
         playTextToSpeech(botResponse)

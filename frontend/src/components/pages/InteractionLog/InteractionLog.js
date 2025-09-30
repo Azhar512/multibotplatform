@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { Search, Download, Printer, RefreshCw, Flag, Archive, Trash2, ChevronRight } from "lucide-react"
+import { useUser } from "../../../contexts/UserContext"
 import io from "socket.io-client"
 
 const InteractionLog = () => {
+  const { user } = useUser()
   const [searchQuery, setSearchQuery] = useState("")
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
@@ -153,8 +155,12 @@ const InteractionLog = () => {
           <div className="flex items-center space-x-4">
             <ConnectionStatus />
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full"></div>
-              <span className="text-white font-medium">Azhar</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xs">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </span>
+              </div>
+              <span className="text-white font-medium">{user?.name || 'User'}</span>
               <ChevronRight className="w-4 h-4 text-white" />
             </div>
           </div>

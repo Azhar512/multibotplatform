@@ -9,6 +9,8 @@ import http from 'http';
 import { networkInterfaces } from 'os';
 import twilioRoutes from './src/routes/twilioRoutes.js';
 import deepseekRoutes from './src/routes/deepseekRoutes.js';
+import bertRoutes from './src/routes/bertRoutes.js';
+import openaiRoutes from './src/routes/openaiRoutes.js';
 import audioStorage from './src/routes/api/audioStorage.js';
 import User from './src/models/User.js';
 import dashboardRoutes from './src/routes/dashboardRoutes.js';
@@ -252,6 +254,8 @@ app.use('/api/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/bot', aiLimiter, botRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/deepseek', aiLimiter, deepseekRoutes);
+app.use('/bert', aiLimiter, bertRoutes);
+app.use('/openai', aiLimiter, openaiRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
