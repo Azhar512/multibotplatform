@@ -1,15 +1,29 @@
 {
-  "name": "multibotplatform",
-  "version": "1.0.0",
-  "description": "",
+  "name": "multibot-platform-frontend",
+  "version": "2.0.0",
+  "description": "AI-powered multi-bot platform frontend with voice capabilities, CRM integration, and advanced analytics",
   "main": "index.js",
   "scripts": {
     "start": "react-scripts start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "preview": "serve -s build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "react",
+    "ai",
+    "chatbot",
+    "voice",
+    "crm",
+    "analytics",
+    "frontend"
+  ],
+  "author": "MultiBot Platform Team",
+  "license": "MIT",
   "dependencies": {
     "@huggingface/inference": "^3.1.2",
     "@twilio/voice-sdk": "^2.12.3",
@@ -26,6 +40,15 @@
     "util": "^0.12.5",
     "web-vitals": "^4.2.4"
   },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "serve": "^14.2.1"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -37,5 +60,17 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/multibot-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/multibot-platform/issues"
+  },
+  "homepage": "https://github.com/your-org/multibot-platform#readme"
 }

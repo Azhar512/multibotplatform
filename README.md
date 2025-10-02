@@ -22,47 +22,42 @@ A comprehensive AI-powered multi-bot platform with voice capabilities, CRM integ
 ## 🛠️ Installation
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 18+ (LTS recommended)
 - MongoDB 6.0+
-- npm or yarn
+- npm 8+ or yarn 1.22+
+- Git
 
 ### Quick Start
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd multibotplatform
+   git clone https://github.com/your-org/multibot-platform.git
+   cd multibot-platform
    ```
 
-2. **Install dependencies**
+2. **Install all dependencies**
    ```bash
-   # Backend
-   cd Backend
-   npm install
-   
-   # Frontend
-   cd ../frontend
-   npm install
+   npm run install:all
    ```
 
 3. **Environment Setup**
    ```bash
    # Copy environment files
-   cp Backend/.env.example Backend/.env
-   cp frontend/.env.example frontend/.env
+   cp Backend/env.example Backend/.env
+   cp frontend/env.example frontend/.env
    
    # Edit configuration files with your API keys
+   # See Configuration section below for required variables
    ```
 
 4. **Start the application**
    ```bash
-   # Backend (Terminal 1)
-   cd Backend
-   npm start
+   # Development mode (both backend and frontend)
+   npm run dev
    
-   # Frontend (Terminal 2)
-   cd frontend
-   npm start
+   # Or start individually
+   npm run start:backend  # Terminal 1
+   npm run start:frontend # Terminal 2
    ```
 
 ### Docker Deployment

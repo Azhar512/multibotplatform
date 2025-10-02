@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import http from 'http';
 import { networkInterfaces } from 'os';
+import { serviceLogger as logger } from './src/config/logger.js';
 import twilioRoutes from './src/routes/twilioRoutes.js';
 import deepseekRoutes from './src/routes/deepseekRoutes.js';
 import bertRoutes from './src/routes/bertRoutes.js';
@@ -59,7 +60,7 @@ app.use(cors({
     }
     
     // Log blocked origins for security monitoring
-    console.warn(`CORS blocked origin: ${origin}`);
+    logger.warn(`CORS blocked origin: ${origin}`);
     return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -74,13 +75,15 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
-  console.log('✅ Connected to MongoDB');
+  logger.info('Connected to MongoDB successfully');
 }).catch((err) => {
-  console.error('❌ MongoDB connection error:', err);
+  logger.error('MongoDB connection error:', { error: err.message, stack: err.stack });
 });
 
 // Initialize audio storage
-audioStorage.initialize().catch(console.error);
+audioStorage.initialize().catch((err) => {
+  logger.error('Audio storage initialization failed:', { error: err.message });
+});
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -123,7 +126,7 @@ app.get('/api/test-auth', authenticateToken, (req, res) => {
 // Auth Routes with rate limiting and validation
 app.post('/api/auth/login', authLimiter, validateUserLogin, async (req, res) => {
   try {
-    console.log('🔐 Login attempt:', req.body.email);
+    logger.info('Login attempt', { email: req.body.email, ip: req.ip });
     
     const { email, password } = req.body;
     
@@ -134,13 +137,13 @@ app.post('/api/auth/login', authLimiter, validateUserLogin, async (req, res) => 
     
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('❌ User not found:', email);
+      logger.warn('Login failed - user not found', { email, ip: req.ip });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log('❌ Password mismatch for:', email);
+      logger.warn('Login failed - password mismatch', { email, ip: req.ip });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
@@ -150,7 +153,7 @@ app.post('/api/auth/login', authLimiter, validateUserLogin, async (req, res) => 
       { expiresIn: '24h' }
     );
     
-    console.log('✅ Login successful for:', email);
+    logger.info('Login successful', { userId: user._id, email, ip: req.ip });
     
     res.json({ 
       token,
@@ -162,14 +165,14 @@ app.post('/api/auth/login', authLimiter, validateUserLogin, async (req, res) => 
       message: 'Login successful'
     });
   } catch (error) {
-    console.error('❌ Login error:', error);
+    logger.error('Login error', { error: error.message, stack: error.stack, ip: req.ip });
     res.status(500).json({ error: error.message });
   }
 });
 
 app.post('/api/auth/register', authLimiter, validateUserRegistration, async (req, res) => {
   try {
-    console.log('📝 Registration attempt:', req.body.email);
+    logger.info('Registration attempt', { email: req.body.email, ip: req.ip });
     
     const { name, email, password } = req.body;
     
@@ -185,7 +188,7 @@ app.post('/api/auth/register', authLimiter, validateUserRegistration, async (req
     
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      console.log('❌ Email already exists:', email);
+      logger.warn('Registration failed - email already exists', { email, ip: req.ip });
       return res.status(400).json({ error: 'Email already exists' });
     }
     
@@ -204,7 +207,7 @@ app.post('/api/auth/register', authLimiter, validateUserRegistration, async (req
       { expiresIn: '24h' }
     );
     
-    console.log('✅ Registration successful for:', email);
+    logger.info('Registration successful', { userId: user._id, email, ip: req.ip });
     
     res.status(201).json({ 
       token,
@@ -216,7 +219,7 @@ app.post('/api/auth/register', authLimiter, validateUserRegistration, async (req
       message: 'Registration successful'
     });
   } catch (error) {
-    console.error('❌ Registration error:', error);
+    logger.error('Registration error', { error: error.message, stack: error.stack, ip: req.ip });
     res.status(500).json({ error: error.message });
   }
 });
@@ -237,7 +240,7 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get user error:', error);
+    logger.error('Get user error', { error: error.message, stack: error.stack, userId: req.user?.userId });
     res.status(500).json({ error: error.message });
   }
 });
@@ -257,18 +260,77 @@ app.use('/bert', aiLimiter, bertRoutes);
 app.use('/openai', aiLimiter, openaiRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    const healthCheck = {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      version: process.env.npm_package_version || '2.0.0',
+      services: {
+        database: 'OK',
+        memory: 'OK',
+        disk: 'OK'
+      }
+    };
+
+    // Check database connection
+    try {
+      await mongoose.connection.db.admin().ping();
+      healthCheck.services.database = 'OK';
+    } catch (error) {
+      healthCheck.services.database = 'ERROR';
+      healthCheck.status = 'DEGRADED';
+    }
+
+    // Check memory usage
+    const memUsage = process.memoryUsage();
+    const memUsageMB = {
+      rss: Math.round(memUsage.rss / 1024 / 1024),
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+      external: Math.round(memUsage.external / 1024 / 1024)
+    };
+
+    if (memUsageMB.heapUsed > 500) { // 500MB threshold
+      healthCheck.services.memory = 'WARNING';
+      healthCheck.memoryUsage = memUsageMB;
+    } else {
+      healthCheck.services.memory = 'OK';
+      healthCheck.memoryUsage = memUsageMB;
+    }
+
+    // Check disk space (simplified)
+    const fs = await import('fs');
+    try {
+      fs.accessSync('./logs', fs.constants.W_OK);
+      healthCheck.services.disk = 'OK';
+    } catch (error) {
+      healthCheck.services.disk = 'WARNING';
+    }
+
+    const statusCode = healthCheck.status === 'OK' ? 200 : 503;
+    res.status(statusCode).json(healthCheck);
+  } catch (error) {
+    logger.error('Health check failed', { error: error.message });
+    res.status(503).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed'
+    });
+  }
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err.stack);
+  logger.error('Global error handler', { 
+    error: err.message, 
+    stack: err.stack, 
+    path: req.path, 
+    method: req.method,
+    ip: req.ip 
+  });
   
   if (err.name === 'UnauthorizedError') {
     return res.status(401).json({ 
@@ -334,25 +396,28 @@ const PORT = process.env.PORT || 5000;
 const currentIP = getLocalIP();
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 React Native can connect to: http://${currentIP}:${PORT}`);
-  console.log(`🌐 Web can connect to: http://localhost:${PORT}`);
-  console.log(`🧪 Test endpoint: http://${currentIP}:${PORT}/api/test`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔌 Socket.io ready for real-time connections`);
+  logger.info('Server started successfully', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    reactNativeUrl: `http://${currentIP}:${PORT}`,
+    webUrl: `http://localhost:${PORT}`,
+    testEndpoint: `http://${currentIP}:${PORT}/api/test`
+  });
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
+  logger.info('SIGTERM received, shutting down gracefully');
   server.close(() => {
-    console.log('Process terminated');
+    logger.info('Process terminated');
+    process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
+  logger.info('SIGINT received, shutting down gracefully');
   server.close(() => {
-    console.log('Process terminated');
+    logger.info('Process terminated');
+    process.exit(0);
   });
 });

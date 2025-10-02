@@ -14,7 +14,9 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const textToSpeechClient = new TextToSpeechClient();
 
 // Initialize storage on startup
-audioStorage.initialize().catch(console.error);
+audioStorage.initialize().catch((err) => {
+  console.error('Audio storage initialization failed:', err.message);
+});
 
 // Handle speech-to-text conversion
 router.post('/speech-to-text', upload.single('audio'), async (req, res) => {
@@ -40,7 +42,7 @@ router.post('/speech-to-text', upload.single('audio'), async (req, res) => {
       success: true
     });
   } catch (error) {
-    console.error('Speech to text error:', error);
+    console.error('Speech to text error:', error.message);
     res.status(500).json({ error: 'Speech to text conversion failed' });
   }
 });
@@ -78,7 +80,7 @@ router.post('/bot/response', async (req, res) => {
 
     res.json(botResponse);
   } catch (error) {
-    console.error('Bot response error:', error);
+    console.error('Bot response error:', error.message);
     res.status(500).json({ error: 'Failed to generate bot response' });
   }
 });
@@ -98,7 +100,7 @@ router.post('/bot/settings', async (req, res) => {
       config
     });
   } catch (error) {
-    console.error('Settings save error:', error);
+    console.error('Settings save error:', error.message);
     res.status(500).json({ error: 'Failed to save settings' });
   }
 });
@@ -110,7 +112,7 @@ router.delete('/audio/:filename', async (req, res) => {
     await audioStorage.delete(fileUrl);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting audio file:', error);
+    console.error('Error deleting audio file:', error.message);
     res.status(500).json({ error: 'Failed to delete audio file' });
   }
 });

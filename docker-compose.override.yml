@@ -1,0 +1,29 @@
+# Development overrides for docker-compose
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/multibotplatform?authSource=admin
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  frontend:
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:5000
+      REACT_APP_BACKEND_URL: http://localhost:5000
+      REACT_APP_WS_URL: ws://localhost:5000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
+
+  mongodb:
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: multibotplatform
