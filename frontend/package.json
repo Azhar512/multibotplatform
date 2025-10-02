@@ -31,6 +31,8 @@
     "axios": "^1.7.9",
     "dotenv-webpack": "^8.1.0",
     "lucide-react": "^0.462.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^7.0.1",
     "react-scripts": "^5.0.1",
@@ -41,12 +43,7 @@
     "web-vitals": "^4.2.4"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-config-airbnb": "^19.0.4",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jsx-a11y": "^6.8.0",
-    "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "serve": "^14.2.1"
   },
   "browserslist": {
@@ -72,5 +69,5 @@
   "bugs": {
     "url": "https://github.com/your-org/multibot-platform/issues"
   },
-  "homepage": "https://github.com/your-org/multibot-platform#readme"
+  "homepage": "."
 }
