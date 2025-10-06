@@ -73,6 +73,23 @@ app.use(cors({
 // MongoDB connection - using in-memory database for testing
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/multibotplatform';
 
+// Start server immediately, don't wait for MongoDB
+const startServer = () => {
+  const PORT = process.env.PORT || 5000;
+  const currentIP = getLocalIP();
+
+  server.listen(PORT, '0.0.0.0', () => {
+    logger.info('Server started successfully', {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      reactNativeUrl: `http://${currentIP}:${PORT}`,
+      webUrl: `http://localhost:${PORT}`,
+      testEndpoint: `http://${currentIP}:${PORT}/api/test`
+    });
+  });
+};
+
+// Try to connect to MongoDB, but don't block server start
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -82,6 +99,9 @@ mongoose.connect(MONGODB_URI, {
   logger.error('MongoDB connection error:', { error: err.message, stack: err.stack });
   // Continue without MongoDB for testing
   logger.warn('Continuing without MongoDB connection for testing purposes');
+}).finally(() => {
+  // Start server regardless of MongoDB connection status
+  startServer();
 });
 
 // Initialize audio storage
@@ -396,20 +416,6 @@ function getLocalIP() {
 
 // Initialize Socket.io
 const io = initSocket(server);
-
-// Start server
-const PORT = process.env.PORT || 5000;
-const currentIP = getLocalIP();
-
-server.listen(PORT, '0.0.0.0', () => {
-  logger.info('Server started successfully', {
-    port: PORT,
-    environment: process.env.NODE_ENV || 'development',
-    reactNativeUrl: `http://${currentIP}:${PORT}`,
-    webUrl: `http://localhost:${PORT}`,
-    testEndpoint: `http://${currentIP}:${PORT}/api/test`
-  });
-});
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
