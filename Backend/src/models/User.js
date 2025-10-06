@@ -39,9 +39,9 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
+// Hash password before saving (only if password is not already hashed)
 UserSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
+  if (this.isModified('password') && !this.password.startsWith('$2a$')) {
     this.password = await bcrypt.hash(this.password, 10);
   }
   next();

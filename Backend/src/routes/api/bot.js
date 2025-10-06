@@ -4,14 +4,21 @@ import { SpeechClient } from '@google-cloud/speech';
 import { OpenAI } from 'openai';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import audioStorage from './audioStorage.js';
+import { serviceLogger as logger } from '../../config/logger.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Initialize clients
-const speechClient = new SpeechClient();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const textToSpeechClient = new TextToSpeechClient();
+// Initialize clients with error handling
+let speechClient, openai, textToSpeechClient;
+
+try {
+  speechClient = new SpeechClient();
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  textToSpeechClient = new TextToSpeechClient();
+} catch (error) {
+  logger.error('Failed to initialize AI clients:', { error: error.message });
+}
 
 // Initialize storage on startup
 audioStorage.initialize().catch((err) => {
@@ -21,6 +28,14 @@ audioStorage.initialize().catch((err) => {
 // Handle speech-to-text conversion
 router.post('/speech-to-text', upload.single('audio'), async (req, res) => {
   try {
+    if (!speechClient) {
+      return res.status(500).json({ error: 'Speech service not available' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Audio file is required' });
+    }
+
     const audioBytes = req.file.buffer.toString('base64');
 
     const request = {
@@ -37,12 +52,16 @@ router.post('/speech-to-text', upload.single('audio'), async (req, res) => {
       .map(result => result.alternatives[0].transcript)
       .join('\n');
 
+    logger.info('Speech to text conversion successful', { 
+      transcriptionLength: transcription.length 
+    });
+
     res.json({
       text: transcription,
       success: true
     });
   } catch (error) {
-    console.error('Speech to text error:', error.message);
+    logger.error('Speech to text error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Speech to text conversion failed' });
   }
 });
@@ -50,9 +69,17 @@ router.post('/speech-to-text', upload.single('audio'), async (req, res) => {
 // Handle bot responses
 router.post('/bot/response', async (req, res) => {
   try {
+    if (!openai) {
+      return res.status(500).json({ error: 'AI service not available' });
+    }
+
     const { message, personality, config } = req.body;
 
-    const systemMessage = generateSystemMessage(personality);
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required and must be a string' });
+    }
+
+    const systemMessage = generateSystemMessage(personality || {});
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -60,7 +87,8 @@ router.post('/bot/response', async (req, res) => {
         { role: "system", content: systemMessage },
         { role: "user", content: message }
       ],
-      temperature: personality.creativity || 0.7
+      temperature: personality?.creativity || 0.7,
+      max_tokens: 500
     });
 
     let botResponse = {
@@ -68,19 +96,28 @@ router.post('/bot/response', async (req, res) => {
       audioUrl: null
     };
 
-    if (config.enableTextToSpeech) {
-      const [audioResponse] = await textToSpeechClient.synthesizeSpeech({
-        input: { text: botResponse.text },
-        voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
-        audioConfig: { audioEncoding: 'MP3' },
-      });
+    if (config?.enableTextToSpeech && textToSpeechClient) {
+      try {
+        const [audioResponse] = await textToSpeechClient.synthesizeSpeech({
+          input: { text: botResponse.text },
+          voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
+          audioConfig: { audioEncoding: 'MP3' },
+        });
 
-      botResponse.audioUrl = await saveAudioAndGetUrl(audioResponse.audioContent);
+        botResponse.audioUrl = await saveAudioAndGetUrl(audioResponse.audioContent);
+      } catch (ttsError) {
+        logger.warn('Text-to-speech failed, returning text only', { error: ttsError.message });
+      }
     }
+
+    logger.info('Bot response generated successfully', { 
+      messageLength: message.length,
+      responseLength: botResponse.text.length 
+    });
 
     res.json(botResponse);
   } catch (error) {
-    console.error('Bot response error:', error.message);
+    logger.error('Bot response error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to generate bot response' });
   }
 });
@@ -90,17 +127,22 @@ router.post('/bot/settings', async (req, res) => {
   try {
     const { personality, config } = req.body;
     
-    if (!isValidPersonality(personality)) {
+    if (personality && !isValidPersonality(personality)) {
       return res.status(400).json({ error: 'Invalid personality settings' });
     }
 
+    logger.info('Bot settings saved successfully', { 
+      hasPersonality: !!personality,
+      hasConfig: !!config 
+    });
+
     res.json({ 
       success: true,
-      personality,
-      config
+      personality: personality || {},
+      config: config || {}
     });
   } catch (error) {
-    console.error('Settings save error:', error.message);
+    logger.error('Settings save error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to save settings' });
   }
 });
@@ -110,9 +152,11 @@ router.delete('/audio/:filename', async (req, res) => {
   try {
     const fileUrl = `/audio/${req.params.filename}`;
     await audioStorage.delete(fileUrl);
+    
+    logger.info('Audio file deleted successfully', { filename: req.params.filename });
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting audio file:', error.message);
+    logger.error('Error deleting audio file:', { error: error.message, filename: req.params.filename });
     res.status(500).json({ error: 'Failed to delete audio file' });
   }
 });

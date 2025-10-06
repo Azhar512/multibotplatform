@@ -1,48 +1,104 @@
-// Simple test script to verify API endpoints
+// Test script to verify endpoints are working
 import fetch from 'node-fetch';
 
 const BASE_URL = 'http://localhost:5000';
 
-const testEndpoints = async () => {
-  console.log('🧪 Testing API endpoints...\n');
+async function testEndpoints() {
+  console.log('🧪 Testing Multi-Bot Platform Endpoints...\n');
 
-  // Test health endpoint
   try {
+    // Test 1: Health check
+    console.log('1. Testing health check...');
     const healthResponse = await fetch(`${BASE_URL}/api/health`);
     const healthData = await healthResponse.json();
-    console.log('✅ Health endpoint:', healthData.status);
+    console.log('✅ Health check:', healthData.status);
+
+    // Test 2: Registration
+    console.log('\n2. Testing user registration...');
+    const registerData = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'testpass123'
+    };
+
+    const registerResponse = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(registerData)
+    });
+
+    const registerResult = await registerResponse.json();
+    if (registerResponse.ok) {
+      console.log('✅ Registration successful');
+      const token = registerResult.token;
+      
+      // Test 3: Login with same credentials
+      console.log('\n3. Testing login with same credentials...');
+      const loginResponse = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'testpass123'
+        })
+      });
+
+      const loginResult = await loginResponse.json();
+      if (loginResponse.ok) {
+        console.log('✅ Login successful');
+        
+        // Test 4: Bot response (authenticated)
+        console.log('\n4. Testing bot response...');
+        const botResponse = await fetch(`${BASE_URL}/api/bot/bot/response`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            message: 'Hello, how are you?',
+            personality: {
+              formality: 0.5,
+              friendliness: 0.8,
+              creativity: 0.7
+            },
+            config: {
+              enableTextToSpeech: false
+            }
+          })
+        });
+
+        const botResult = await botResponse.json();
+        if (botResponse.ok) {
+          console.log('✅ Bot response successful:', botResult.text?.substring(0, 100) + '...');
+        } else {
+          console.log('❌ Bot response failed:', botResult.error);
+        }
+
+        // Test 5: Get user info
+        console.log('\n5. Testing get user info...');
+        const userResponse = await fetch(`${BASE_URL}/api/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const userResult = await userResponse.json();
+        if (userResponse.ok) {
+          console.log('✅ Get user info successful:', userResult.user.email);
+        } else {
+          console.log('❌ Get user info failed:', userResult.error);
+        }
+
+      } else {
+        console.log('❌ Login failed:', loginResult.error);
+      }
+    } else {
+      console.log('❌ Registration failed:', registerResult.error);
+    }
+
   } catch (error) {
-    console.log('❌ Health endpoint failed:', error.message);
+    console.error('❌ Test failed with error:', error.message);
   }
+}
 
-  // Test DeepSeek endpoint
-  try {
-    const deepseekResponse = await fetch(`${BASE_URL}/deepseek/health`);
-    const deepseekData = await deepseekResponse.json();
-    console.log('✅ DeepSeek endpoint:', deepseekData.status);
-  } catch (error) {
-    console.log('❌ DeepSeek endpoint failed:', error.message);
-  }
-
-  // Test BERT endpoint
-  try {
-    const bertResponse = await fetch(`${BASE_URL}/bert/health`);
-    const bertData = await bertResponse.json();
-    console.log('✅ BERT endpoint:', bertData.status);
-  } catch (error) {
-    console.log('❌ BERT endpoint failed:', error.message);
-  }
-
-  // Test OpenAI endpoint
-  try {
-    const openaiResponse = await fetch(`${BASE_URL}/openai/health`);
-    const openaiData = await openaiResponse.json();
-    console.log('✅ OpenAI endpoint:', openaiData.status);
-  } catch (error) {
-    console.log('❌ OpenAI endpoint failed:', error.message);
-  }
-
-  console.log('\n🎉 Endpoint testing completed!');
-};
-
-testEndpoints().catch(console.error);
+// Run tests
+testEndpoints();

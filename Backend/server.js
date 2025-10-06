@@ -253,7 +253,7 @@ app.post('/api/auth/logout', authenticateToken, (req, res) => {
 // Routes with specific rate limiting
 app.use('/api/twilio', voiceLimiter, twilioRoutes);
 app.use('/api/dashboard', authenticateToken, dashboardRoutes);
-app.use('/api/bot', aiLimiter, botRoutes);
+app.use('/api/bot', authenticateToken, aiLimiter, botRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/deepseek', aiLimiter, deepseekRoutes);
 app.use('/bert', aiLimiter, bertRoutes);
