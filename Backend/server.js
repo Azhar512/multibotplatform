@@ -70,14 +70,18 @@ app.use(cors({
   maxAge: 86400 // 24 hours
 }));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
+// MongoDB connection - using in-memory database for testing
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/multibotplatform';
+
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
   logger.info('Connected to MongoDB successfully');
 }).catch((err) => {
   logger.error('MongoDB connection error:', { error: err.message, stack: err.stack });
+  // Continue without MongoDB for testing
+  logger.warn('Continuing without MongoDB connection for testing purposes');
 });
 
 // Initialize audio storage
@@ -132,19 +136,19 @@ app.post('/api/auth/login', authLimiter, validateUserLogin, async (req, res) => 
     
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({ success: false, error: 'Email and password are required' });
     }
     
     const user = await User.findOne({ email });
     if (!user) {
       logger.warn('Login failed - user not found', { email, ip: req.ip });
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.warn('Login failed - password mismatch', { email, ip: req.ip });
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     
     const token = jwt.sign(
@@ -156,6 +160,7 @@ app.post('/api/auth/login', authLimiter, validateUserLogin, async (req, res) => 
     logger.info('Login successful', { userId: user._id, email, ip: req.ip });
     
     res.json({ 
+      success: true,
       token,
       user: {
         id: user._id,
@@ -166,7 +171,7 @@ app.post('/api/auth/login', authLimiter, validateUserLogin, async (req, res) => 
     });
   } catch (error) {
     logger.error('Login error', { error: error.message, stack: error.stack, ip: req.ip });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -178,18 +183,18 @@ app.post('/api/auth/register', authLimiter, validateUserRegistration, async (req
     
     // Validate input
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
+      return res.status(400).json({ success: false, error: 'Name, email, and password are required' });
     }
     
     // Check password length
     if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long' });
     }
     
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       logger.warn('Registration failed - email already exists', { email, ip: req.ip });
-      return res.status(400).json({ error: 'Email already exists' });
+      return res.status(400).json({ success: false, error: 'Email already exists' });
     }
     
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -210,6 +215,7 @@ app.post('/api/auth/register', authLimiter, validateUserRegistration, async (req
     logger.info('Registration successful', { userId: user._id, email, ip: req.ip });
     
     res.status(201).json({ 
+      success: true,
       token,
       user: {
         id: user._id,
@@ -220,7 +226,7 @@ app.post('/api/auth/register', authLimiter, validateUserRegistration, async (req
     });
   } catch (error) {
     logger.error('Registration error', { error: error.message, stack: error.stack, ip: req.ip });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

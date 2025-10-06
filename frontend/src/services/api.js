@@ -479,7 +479,7 @@ export const userAPI = {
 export const authAPI = {
   login: async (credentials) => {
     try {
-      const data = await api.post("/auth/login", credentials)
+      const data = await api.post("/api/auth/login", credentials)
       if (data.token) {
         localStorage.setItem("token", data.token)
       }
@@ -494,7 +494,7 @@ export const authAPI = {
 
   register: async (userData) => {
     try {
-      const data = await api.post("/auth/register", userData)
+      const data = await api.post("/api/auth/register", userData)
       if (data.token) {
         localStorage.setItem("token", data.token)
       }
@@ -509,7 +509,7 @@ export const authAPI = {
 
   logout: async () => {
     try {
-      await api.post("/auth/logout")
+      await api.post("/api/auth/logout")
       localStorage.removeItem("token")
       return {
         success: true,
