@@ -22,7 +22,7 @@ export const UserProvider = ({ children }) => {
       if (token) {
         try {
           // Verify token by getting user info
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/me`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://168.231.114.68:5000'}/api/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'

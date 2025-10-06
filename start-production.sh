@@ -1,35 +1,39 @@
 #!/bin/bash
 
-# Production Start Script for MultiBot Platform
-echo "🚀 Starting MultiBot Platform in Production Mode..."
+echo "Starting MultiBot Platform - Production Server"
+echo "=============================================="
 
-# Check if MongoDB is running
-if ! pgrep -x "mongod" > /dev/null; then
-    echo "⚠️  MongoDB is not running. Starting MongoDB..."
-    sudo systemctl start mongod
-    sleep 5
+# Check if we're in the right directory
+if [ ! -f "Backend/server.js" ]; then
+    echo "Error: Backend/server.js not found. Please run this from the project root."
+    exit 1
 fi
 
-# Start Backend
-echo "🔧 Starting Backend Server..."
+echo "Setting up Backend..."
 cd Backend
-npm start &
-BACKEND_PID=$!
 
-# Wait for backend to start
-sleep 10
+# Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+    echo "Installing backend dependencies..."
+    npm install
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to install backend dependencies"
+        exit 1
+    fi
+fi
 
-# Start Frontend
-echo "🌐 Starting Frontend Server..."
-cd ../frontend
-npm start &
-FRONTEND_PID=$!
+# Create .env file if it doesn't exist
+if [ ! -f ".env" ]; then
+    echo "Creating .env file..."
+    cp env.example .env
+fi
 
-echo "✅ MultiBot Platform is starting..."
-echo "📊 Backend PID: $BACKEND_PID"
-echo "🌐 Frontend PID: $FRONTEND_PID"
-echo "🔗 Frontend URL: http://168.231.114.68:3000"
-echo "🔗 Backend API: http://168.231.114.68:5000"
+echo ""
+echo "Starting Backend Server..."
+echo "Backend will be available at: http://0.0.0.0:5000"
+echo "Test endpoint: http://0.0.0.0:5000/api/test"
+echo "Mobile app can connect to: http://YOUR_SERVER_IP:5000"
+echo ""
 
-# Keep script running
-wait
+# Start the server
+node server.js

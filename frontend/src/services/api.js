@@ -2,7 +2,7 @@ import axios from "axios"
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000",
+  baseURL: process.env.REACT_APP_API_URL || "http://168.231.114.68:5000",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -479,7 +479,7 @@ export const userAPI = {
 export const authAPI = {
   login: async (credentials) => {
     try {
-      const data = await api.post("/api/auth/login", credentials)
+      const data = await api.post("/auth/login", credentials)
       if (data.token) {
         localStorage.setItem("token", data.token)
       }
@@ -494,7 +494,7 @@ export const authAPI = {
 
   register: async (userData) => {
     try {
-      const data = await api.post("/api/auth/register", userData)
+      const data = await api.post("/auth/register", userData)
       if (data.token) {
         localStorage.setItem("token", data.token)
       }

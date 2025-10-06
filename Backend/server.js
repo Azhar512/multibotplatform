@@ -41,17 +41,20 @@ const allowedOrigins = [
   'http://localhost:19000',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:19006',
-  'http://127.0.0.1:19000'
+  'http://127.0.0.1:19000',
+  'http://168.231.114.68',
+  'http://168.231.114.68:3000',
+  'http://168.231.114.68:80',
+  'https://168.231.114.68',
+  'https://168.231.114.68:3000',
+  'https://168.231.114.68:80'
 ].filter(Boolean); // Remove undefined values
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests) only in development
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
-      if (process.env.NODE_ENV === 'development') {
-        return callback(null, true);
-      }
-      return callback(new Error('Origin required in production'));
+      return callback(null, true);
     }
     
     // Check if origin is allowed
@@ -65,7 +68,7 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['X-Total-Count'],
   maxAge: 86400 // 24 hours
 }));
