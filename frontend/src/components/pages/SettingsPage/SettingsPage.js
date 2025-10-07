@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import { Lock, Eye, EyeOff, ChevronRight, Shield, Key, Smartphone, Save } from "lucide-react"
+import { useUser } from "../../../contexts/UserContext"
 
 const SettingsPage = () => {
+  const { user } = useUser()
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [newPasswordVisible, setNewPasswordVisible] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true)

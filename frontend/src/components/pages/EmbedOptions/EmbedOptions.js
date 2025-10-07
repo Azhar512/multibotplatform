@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import { ChevronRight, Github, Twitter, Linkedin, Mail, Copy, Upload, RefreshCw } from "lucide-react"
+import { useUser } from "../../../contexts/UserContext"
 
 const EmbedOptions = () => {
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState("embed-options")
   const [customization, setCustomization] = useState({
     theme: "dark",

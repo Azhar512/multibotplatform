@@ -5,6 +5,7 @@ import { Search, Download, MessageSquare, Ban, Trash2, Users, ChevronRight, X } 
 import { io } from "socket.io-client"
 import axios from "axios"
 import { toast } from "react-hot-toast"
+import { useUser } from "../../../contexts/UserContext"
 
 // API configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL + "/api" || "http://localhost:5000/api"
@@ -14,6 +15,7 @@ const socket = io(process.env.REACT_APP_BACKEND_URL || "http://localhost:5000", 
 })
 
 const UsersPage = () => {
+  const { user } = useUser()
   // State management
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
