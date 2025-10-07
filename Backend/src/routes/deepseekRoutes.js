@@ -1,6 +1,7 @@
 import express from "express"
 import deepseekService from "../services/deepseekService.js"
 import simpleChatService from "../services/simpleChatService.js"
+import aiChatService from "../services/aiChatService.js"
 import bertService from "../services/bertService.js"
 import rateLimit from "express-rate-limit"
 
@@ -68,15 +69,15 @@ router.post("/response", validateRequest, async (req, res) => {
   const { message, personality, config } = req.body
 
   try {
-    // Use simple chat service as fallback
-    console.log("Using Simple Chat service for response...")
+    // Use AI chat service for intelligent responses
+    console.log("Using AI Chat service for response...")
     
-    if (!simpleChatService.isInitialized) {
-      await simpleChatService.initialize()
+    if (!aiChatService.isInitialized) {
+      await aiChatService.initialize()
     }
 
-    console.log("Generating response for message:", message)
-    const response = await simpleChatService.generateResponse(message, personality, config)
+    console.log("Generating AI response for message:", message)
+    const response = await aiChatService.generateResponse(message, personality, config)
 
     let sentiment = null
     if (config?.enableSentiment) {
