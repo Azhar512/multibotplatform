@@ -266,7 +266,7 @@ export const botAPI = {
       const formData = new FormData()
       formData.append("audio", audioBlob)
 
-      const response = await api.post("/speech-to-text", formData, {
+      const response = await api.post("/api/speech-to-text", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -479,7 +479,7 @@ export const userAPI = {
 export const authAPI = {
   login: async (credentials) => {
     try {
-      const data = await api.post("/auth/login", credentials)
+      const data = await api.post("/api/auth/login", credentials)
       if (data.token) {
         localStorage.setItem("token", data.token)
       }
@@ -494,7 +494,7 @@ export const authAPI = {
 
   register: async (userData) => {
     try {
-      const data = await api.post("/auth/register", userData)
+      const data = await api.post("/api/auth/register", userData)
       if (data.token) {
         localStorage.setItem("token", data.token)
       }
@@ -523,7 +523,7 @@ export const authAPI = {
 
   refreshToken: async () => {
     try {
-      const data = await api.post("/auth/refresh-token")
+      const data = await api.post("/api/auth/refresh-token")
       if (data.token) {
         localStorage.setItem("token", data.token)
       }
@@ -541,7 +541,7 @@ export const authAPI = {
 export const healthAPI = {
   checkStatus: async () => {
     try {
-      const data = await api.get("/health-check")
+      const data = await api.get("/api/health")
       return {
         success: true,
         data: data,
