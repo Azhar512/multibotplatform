@@ -21,19 +21,55 @@ class SimpleChatService {
     try {
       console.log(`💬 Processing message: "${message}"`);
       
-      // Simple rule-based responses for testing
-      const responses = [
-        "Hello! How can I help you today?",
-        "That's interesting! Tell me more.",
-        "I understand what you're saying.",
-        "Thanks for sharing that with me!",
-        "I'm here to help! What would you like to know?",
-        "That's a great question!",
-        "I appreciate your message.",
-        "Let me think about that...",
-        "That sounds exciting!",
-        "I'm listening! Please continue."
-      ];
+      // Intelligent responses based on message content
+      let response = "";
+      
+      const lowerMessage = message.toLowerCase();
+      
+      // Greeting responses
+      if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
+        response = "Hello! How can I help you today?";
+      }
+      // Question about capitals
+      else if (lowerMessage.includes("capital") && lowerMessage.includes("france")) {
+        response = "The capital of France is Paris! 🇫🇷";
+      }
+      else if (lowerMessage.includes("capital") && lowerMessage.includes("germany")) {
+        response = "The capital of Germany is Berlin! 🇩🇪";
+      }
+      else if (lowerMessage.includes("capital") && lowerMessage.includes("spain")) {
+        response = "The capital of Spain is Madrid! 🇪🇸";
+      }
+      // How are you questions
+      else if (lowerMessage.includes("how are you") || lowerMessage.includes("how do you do")) {
+        response = "I'm doing great, thank you for asking! How are you doing today?";
+      }
+      // Weather questions
+      else if (lowerMessage.includes("weather")) {
+        response = "I'd love to help with weather information, but I don't have access to current weather data. You might want to check a weather app or website!";
+      }
+      // Time questions
+      else if (lowerMessage.includes("time") || lowerMessage.includes("what time")) {
+        response = `The current time is ${new Date().toLocaleTimeString()}.`;
+      }
+      // Help questions
+      else if (lowerMessage.includes("help") || lowerMessage.includes("what can you do")) {
+        response = "I can help you with general questions, have conversations, answer basic facts, and provide assistance! What would you like to know?";
+      }
+      // Default intelligent responses
+      else {
+        const responses = [
+          "That's a great question! Let me help you with that.",
+          "I understand what you're asking. Here's what I think...",
+          "That's interesting! I'd be happy to discuss this with you.",
+          "Thanks for sharing that! I appreciate your message.",
+          "I'm here to help! What specific information are you looking for?",
+          "That sounds like something worth exploring further.",
+          "I'm listening and ready to assist you!",
+          "That's a thoughtful question. Let me provide some insight."
+        ];
+        response = responses[Math.floor(Math.random() * responses.length)];
+      }
 
       // Add personality-based responses
       if (personality.Humour > 60) {

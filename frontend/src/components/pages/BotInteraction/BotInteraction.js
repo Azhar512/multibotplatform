@@ -676,7 +676,7 @@ const BotInteraction = () => {
               </div>
             )}
             <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full"></div>
-            <span className="text-white font-medium">Azhar</span>
+            <span className="text-white font-medium">{user?.name || 'User'}</span>
             <ChevronRight className="w-4 h-4 text-white" />
           </div>
         </div>
