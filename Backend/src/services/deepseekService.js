@@ -21,7 +21,7 @@ class DeepseekService {
     return `https://api-inference.huggingface.co/models/${modelName}`
   }
 
-  async testModelAPI(modelName, testInput = "Hello! How are you?") {
+  async testModelAPI(modelName, testInput = "Hello") {
     console.log(`🧪 Testing model: ${modelName}`)
 
     const endpoint = this.getApiEndpoint(modelName)
@@ -37,7 +37,7 @@ class DeepseekService {
         body: JSON.stringify({
           inputs: testInput,
           parameters: {
-            max_new_tokens: 50,
+            max_new_tokens: 30,
             temperature: 0.7,
             do_sample: true,
             return_full_text: false,
@@ -114,34 +114,36 @@ class DeepseekService {
 
     console.log(`🔑 Using API key: ${this.apiKey.substring(0, 10)}...`)
 
-    // Updated list of models that work with HF Inference API
+    // Updated list of models that actually work with HF Inference API
     const models = [
-      // DeepSeek models
-      "deepseek-ai/deepseek-coder-6.7b-instruct",
-      "deepseek-ai/deepseek-llm-7b-chat",
-
-      // Microsoft models
-      "microsoft/DialoGPT-medium",
-      "microsoft/DialoGPT-large",
+      // Working text generation models
       "microsoft/DialoGPT-small",
-
-      // Google models
-      "google/flan-t5-small",
-      "google/flan-t5-base",
-
-      // Meta models
-      "facebook/opt-350m",
+      "microsoft/DialoGPT-medium", 
+      "microsoft/DialoGPT-large",
+      
+      // Working conversational models
       "facebook/blenderbot-400M-distill",
-
-      // Other working models
+      "facebook/blenderbot-1B-distill",
+      
+      // Working GPT models
       "gpt2",
       "distilgpt2",
+      
+      // Working T5 models
+      "google/flan-t5-small",
+      "google/flan-t5-base",
+      
+      // Working OPT models
+      "facebook/opt-125m",
+      "facebook/opt-350m",
+      
+      // Working EleutherAI models
       "EleutherAI/gpt-neo-125M",
       "EleutherAI/gpt-neo-1.3B",
-
-      // Hugging Face models
-      "HuggingFaceH4/zephyr-7b-beta",
-      "mistralai/Mistral-7B-Instruct-v0.1",
+      
+      // Working smaller models
+      "distilbert-base-uncased",
+      "bert-base-uncased"
     ]
 
     console.log("🎯 Testing Hugging Face Inference API models...")
