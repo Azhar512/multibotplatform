@@ -1,5 +1,6 @@
 import express from "express"
 import deepseekService from "../services/deepseekService.js"
+import simpleChatService from "../services/simpleChatService.js"
 import bertService from "../services/bertService.js"
 import rateLimit from "express-rate-limit"
 
@@ -67,17 +68,15 @@ router.post("/response", validateRequest, async (req, res) => {
   const { message, personality, config } = req.body
 
   try {
-    // Check DeepSeek service status
-    const serviceStatus = deepseekService.getStatus()
-    console.log("DeepSeek service status:", serviceStatus)
-
-    if (!serviceStatus.initialized) {
-      console.log("Service not initialized. Attempting to initialize...")
-      await deepseekService.initialize()
+    // Use simple chat service as fallback
+    console.log("Using Simple Chat service for response...")
+    
+    if (!simpleChatService.isInitialized) {
+      await simpleChatService.initialize()
     }
 
-    console.log("Generating DeepSeek response for message:", message)
-    const response = await deepseekService.generateResponse(message, personality)
+    console.log("Generating response for message:", message)
+    const response = await simpleChatService.generateResponse(message, personality, config)
 
     let sentiment = null
     if (config?.enableSentiment) {
@@ -86,15 +85,14 @@ router.post("/response", validateRequest, async (req, res) => {
     }
 
     const result = {
-      botResponse:
-        response.text || response.adjusted || "I apologize, but I encountered an issue generating a response.",
-      originalResponse: response.original || response.raw || response.text,
-      confidence: response.confidence || 0.5,
+      botResponse: response.response || "I apologize, but I encountered an issue generating a response.",
+      originalResponse: response.response,
+      confidence: 0.8,
       sentiment,
-      model: response.model || "fallback",
-      modelType: response.modelType || "unknown",
-      status: response.status || "success",
-      timestamp: new Date().toISOString(),
+      model: response.model || "simple-chat",
+      modelType: "chat",
+      status: response.success ? "success" : "error",
+      timestamp: response.timestamp || new Date().toISOString(),
     }
 
     console.log("Sending successful response")
