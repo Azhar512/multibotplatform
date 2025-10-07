@@ -71,28 +71,25 @@ class SimpleChatService {
         response = responses[Math.floor(Math.random() * responses.length)];
       }
 
-      // Add personality-based responses
-      if (personality.Humour > 60) {
-        responses.push("Haha, that's funny! 😄", "You've got a great sense of humor!", "That made me smile! 😊");
+      // Add personality-based modifications to the response
+      if (personality.Humour > 60 && Math.random() > 0.7) {
+        response = response + " 😄";
       }
       
-      if (personality.Empathy > 70) {
-        responses.push("I really understand how you feel.", "That must be important to you.", "I'm here to listen and support you.");
+      if (personality.Empathy > 70 && Math.random() > 0.7) {
+        response = "I understand. " + response;
       }
-
-      // Random response selection
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       
       // Simulate response delay
       if (config.responseDelay) {
         await new Promise(resolve => setTimeout(resolve, config.responseDelay));
       }
 
-      console.log(`🤖 Generated response: "${randomResponse}"`);
+      console.log(`🤖 Generated response: "${response}"`);
       
       return {
         success: true,
-        response: randomResponse,
+        response: response,
         model: this.currentModel,
         timestamp: new Date().toISOString()
       };
