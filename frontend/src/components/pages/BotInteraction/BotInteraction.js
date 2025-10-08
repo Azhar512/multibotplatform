@@ -144,6 +144,9 @@ const BotInteraction = () => {
       checkApiConnection()
       initializeSocket()
     }
+    
+    // Always check API connection regardless of auth status
+    checkApiConnection()
 
     return () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
@@ -268,10 +271,16 @@ const BotInteraction = () => {
 
   const checkApiConnection = async () => {
     try {
+      const token = getAuthToken()
+      const headers = {}
+      
+      // Only add Authorization header if token exists
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://168.231.114.68:5000'}/api/health`, {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`,
-        },
+        headers,
       })
 
       if (!response.ok) throw new Error("API health check failed")
