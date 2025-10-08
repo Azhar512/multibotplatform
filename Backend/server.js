@@ -33,7 +33,7 @@ app.use(generalLimiter);
 app.use(speedLimiter);
 app.use(sanitizeInput);
 
-// Secure CORS configuration
+// Secure CORS configuration - Updated for mobile app
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
@@ -47,7 +47,21 @@ const allowedOrigins = [
   'http://168.231.114.68:80',
   'https://168.231.114.68',
   'https://168.231.114.68:3000',
-  'https://168.231.114.68:80'
+  'https://168.231.114.68:80',
+  // Mobile app origins
+  'exp://192.168.1.100:19000',
+  'exp://192.168.1.101:19000',
+  'exp://192.168.1.102:19000',
+  'exp://192.168.1.103:19000',
+  'exp://192.168.1.104:19000',
+  'exp://192.168.1.105:19000',
+  'exp://192.168.1.106:19000',
+  'exp://192.168.1.107:19000',
+  'exp://192.168.1.108:19000',
+  'exp://192.168.1.109:19000',
+  'exp://192.168.1.110:19000',
+  // Allow all origins for development (remove in production)
+  ...(process.env.NODE_ENV === 'development' ? ['*'] : [])
 ].filter(Boolean); // Remove undefined values
 
 app.use(cors({
