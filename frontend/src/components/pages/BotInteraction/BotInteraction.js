@@ -268,7 +268,7 @@ const BotInteraction = () => {
 
   const checkApiConnection = async () => {
     try {
-      const response = await fetch("/api/health-check", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://168.231.114.68:5000'}/api/health`, {
         headers: {
           Authorization: `Bearer ${getAuthToken()}`,
         },
