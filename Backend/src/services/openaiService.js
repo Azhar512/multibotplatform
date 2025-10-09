@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import PersonalityProcessor from '../utils/personalityProcessor.js';
 import axios from 'axios';
-import realAIService from './realAIService.js';
+import enhancedAIService from './enhancedAIService.js';
 
 class OpenAIService {
   constructor() {
@@ -58,8 +58,8 @@ class OpenAIService {
 
   async generateResponse(text, personalitySettings, modelType = 'gpt-4-turbo') {
     try {
-      // Use the real AI service for actual AI responses
-      const aiResponse = await realAIService.generateResponse(text, personalitySettings, modelType);
+      // Use the enhanced AI service for actual AI responses
+      const aiResponse = await enhancedAIService.generateResponse(text, personalitySettings, modelType);
       
       return {
         text: aiResponse.text,

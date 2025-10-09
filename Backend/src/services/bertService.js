@@ -2,7 +2,7 @@ import { HfInference } from "@huggingface/inference"
 import dotenv from "dotenv"
 import { BERT_MODELS, MODEL_CAPABILITIES, FALLBACK_CONFIG } from "../config/models.js"
 import { serviceLogger as logger } from "../config/logger.js"
-import realAIService from "./realAIService.js"
+import enhancedAIService from "./enhancedAIService.js"
 
 dotenv.config()
 
@@ -169,8 +169,8 @@ class BertService {
     try {
       logger.info(`Generating response using real AI service for message: ${message}`)
       
-      // Use the real AI service for actual AI responses
-      const aiResponse = await realAIService.generateResponse(message, personality, 'gpt-3.5-turbo')
+      // Use the enhanced AI service for actual AI responses
+      const aiResponse = await enhancedAIService.generateResponse(message, personality, 'gpt-3.5-turbo')
       
       const adjustedResponse = this.adjustResponseByPersonality(aiResponse.text, personality)
 
