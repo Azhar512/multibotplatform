@@ -298,9 +298,120 @@ app.use('/api/twilio', voiceLimiter, twilioRoutes);
 app.use('/api/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/bot', authenticateToken, aiLimiter, botRoutes);
 app.use('/api/users', usersRoutes);
-app.use('/deepseek', aiLimiter, deepseekRoutes);
-app.use('/bert', aiLimiter, bertRoutes);
-app.use('/openai', aiLimiter, openaiRoutes);
+app.use('/api/deepseek', aiLimiter, deepseekRoutes);
+app.use('/api/bert', aiLimiter, bertRoutes);
+app.use('/api/openai', aiLimiter, openaiRoutes);
+
+// Additional bot endpoints for mobile app compatibility
+app.use('/api/bot/deepseek', aiLimiter, deepseekRoutes);
+app.use('/api/bot/openai', aiLimiter, openaiRoutes);
+app.use('/api/bot/bert', aiLimiter, bertRoutes);
+
+// Dashboard endpoints for web frontend
+app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
+  try {
+    res.json({
+      totalSales: 125000,
+      salesGrowth: 15.5,
+      totalProfit: 45000,
+      profitGrowth: 12.3,
+      averageSales: 2500,
+      averageSalesGrowth: 8.7,
+      marginRate: 36.0,
+      marginRateGrowth: 2.1,
+      interactionsByType: {
+        chat: 1250,
+        email: 340,
+        voice: 89,
+        appointment: 156
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+  }
+});
+
+app.get('/api/dashboard/interaction-trends', authenticateToken, async (req, res) => {
+  try {
+    res.json([
+      { date: '2024-01-01', interactions: 45, satisfaction: 4.2 },
+      { date: '2024-01-02', interactions: 52, satisfaction: 4.3 },
+      { date: '2024-01-03', interactions: 38, satisfaction: 4.1 },
+      { date: '2024-01-04', interactions: 61, satisfaction: 4.4 },
+      { date: '2024-01-05', interactions: 47, satisfaction: 4.2 }
+    ]);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch interaction trends' });
+  }
+});
+
+app.get('/api/dashboard/personality-effectiveness', authenticateToken, async (req, res) => {
+  try {
+    res.json({
+      empathy: { score: 4.2, trend: 'up' },
+      assertiveness: { score: 3.8, trend: 'stable' },
+      humour: { score: 4.0, trend: 'up' },
+      patience: { score: 4.1, trend: 'stable' },
+      confidence: { score: 4.3, trend: 'up' }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch personality effectiveness' });
+  }
+});
+
+app.get('/api/dashboard/revenue-overview', authenticateToken, async (req, res) => {
+  try {
+    const period = req.query.period || 'monthly';
+    res.json([
+      { month: 'Jan', sales: 25000, profit: 9000 },
+      { month: 'Feb', sales: 28000, profit: 10000 },
+      { month: 'Mar', sales: 32000, profit: 11500 },
+      { month: 'Apr', sales: 30000, profit: 10800 },
+      { month: 'May', sales: 35000, profit: 12600 },
+      { month: 'Jun', sales: 38000, profit: 13680 }
+    ]);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch revenue overview' });
+  }
+});
+
+// General chat endpoint for mobile app
+app.post('/api/bot/chat', authenticateToken, aiLimiter, async (req, res) => {
+  try {
+    const { message, personality, config } = req.body;
+    
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+
+    // Use BERT service as default for general chat
+    const bertService = await import('./src/services/bertService.js');
+    const response = await bertService.default.generateResponse(
+      message, 
+      'bert-base-uncased', 
+      personality || {}, 
+      { signal: null }
+    );
+
+    res.json({
+      success: true,
+      response: response.adjusted || response.original || 'I apologize, but I encountered an issue generating a response.',
+      confidence: response.confidence || 0.5,
+      model: 'bert-base-uncased',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('General chat error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate response',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

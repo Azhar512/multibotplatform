@@ -208,7 +208,7 @@ export const botAPI = {
     try {
       console.log("Calling BERT API with:", { text: text.substring(0, 50) + "...", model })
 
-      const response = await api.post("/bert/response", {
+      const response = await api.post("/api/bert/response", {
         message: text,
         personality,
         model,
@@ -235,7 +235,7 @@ export const botAPI = {
 
   getDeepseekResponse: async (text, personality, config) => {
     try {
-      const response = await api.post("/deepseek/response", {
+      const response = await api.post("/api/deepseek/response", {
         message: text,
         personality,
         config,
@@ -249,7 +249,7 @@ export const botAPI = {
 
   getOpenAIResponse: async (text, personality, config) => {
     try {
-      const response = await api.post("/openai/response", {
+      const response = await api.post("/api/openai/response", {
         message: text,
         personality,
         config,
@@ -285,7 +285,7 @@ export const botAPI = {
 export const modelAPI = {
   getDeepSeekResponse: async (input, config = {}) => {
     try {
-      const response = await api.post("/model/deepseek", {
+      const response = await api.post("/api/model/deepseek", {
         input,
         model: "deepseek-r1",
         config: {
@@ -307,7 +307,7 @@ export const modelAPI = {
 
   getIndustryModelResponse: async (industry, input, context = null) => {
     try {
-      const response = await api.post("/model/industry", {
+      const response = await api.post("/api/model/industry", {
         industry,
         input,
         context,
@@ -327,7 +327,7 @@ export const modelAPI = {
 
   getGeneralResponse: async (question, context) => {
     try {
-      const response = await api.post("/model/general", {
+      const response = await api.post("/api/model/general", {
         question,
         context,
         model: "deepset/roberta-base-squad2",
@@ -343,7 +343,7 @@ export const modelAPI = {
 
   getFinanceResponse: async (input, context = null) => {
     try {
-      const response = await api.post("/model/finance", {
+      const response = await api.post("/api/model/finance", {
         input,
         context,
         model: "microsoft/deberta-v3-base",
@@ -359,7 +359,7 @@ export const modelAPI = {
 
   getLegalResponse: async (input, context = null) => {
     try {
-      const response = await api.post("/model/legal", {
+      const response = await api.post("/api/model/legal", {
         input,
         context,
         model: "nlpaueb/legal-bert-base-uncased",
@@ -375,7 +375,7 @@ export const modelAPI = {
 
   getRealEstateResponse: async (input, context = null) => {
     try {
-      const response = await api.post("/model/realestate", {
+      const response = await api.post("/api/model/realestate", {
         input,
         context,
         model: "bert-base-uncased",
@@ -391,7 +391,7 @@ export const modelAPI = {
 
   getInsuranceResponse: async (input, context = null) => {
     try {
-      const response = await api.post("/model/insurance", {
+      const response = await api.post("/api/model/insurance", {
         input,
         context,
         model: "distilbert-base-uncased",

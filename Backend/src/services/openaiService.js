@@ -4,9 +4,12 @@ import axios from 'axios';
 
 class OpenAIService {
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    this.openai = null;
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+    }
   }
 
   async processVoiceInput(audioBlob, personalitySettings, modelType) {
@@ -34,6 +37,10 @@ class OpenAIService {
   }
 
   async speechToText(audioBlob) {
+    if (!this.openai) {
+      throw new Error('OpenAI API key not configured');
+    }
+    
     try {
       const transcription = await this.openai.audio.transcriptions.create({
         file: audioBlob,
@@ -47,6 +54,10 @@ class OpenAIService {
   }
 
   async generateResponse(text, personalitySettings, modelType = 'gpt-4-turbo') {
+    if (!this.openai) {
+      throw new Error('OpenAI API key not configured');
+    }
+    
     // Process personality traits
     const processedTraits = PersonalityProcessor.processPersonalityTraits(personalitySettings);
 
