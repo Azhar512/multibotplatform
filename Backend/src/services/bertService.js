@@ -2,6 +2,7 @@ import { HfInference } from "@huggingface/inference"
 import dotenv from "dotenv"
 import { BERT_MODELS, MODEL_CAPABILITIES, FALLBACK_CONFIG } from "../config/models.js"
 import { serviceLogger as logger } from "../config/logger.js"
+import realAIService from "./realAIService.js"
 
 dotenv.config()
 
@@ -166,55 +167,34 @@ class BertService {
     }
 
     try {
-      const modelConfig = await this.loadModel(modelName)
-      const processedInput = this.preprocessInput(message, personality, modelConfig)
-
-      logger.info(`Generating response using model: ${modelConfig.effectiveModel || modelConfig.name}`)
-
-      let result = await this.handleTextGeneration(processedInput, modelConfig, options.signal)
-
-      if (!result || !result.answer) {
-        logger.warn("Primary model failed, using fallback")
-        const fallbackConfig = {
-          ...FALLBACK_CONFIG,
-          effectiveModel: "microsoft/DialoGPT-small",
-        }
-        result = await this.handleTextGeneration(processedInput, fallbackConfig, options.signal)
-      }
-
-      if (!result || !result.answer) {
-        // Generate intelligent response based on user input
-        const intelligentResponse = this.generateIntelligentResponse(message, personality)
-        
-        result = {
-          answer: intelligentResponse,
-          confidence: 0.8,
-          usedFallback: true,
-        }
-      }
-
-      const adjustedResponse = this.adjustResponseByPersonality(result.answer, personality)
+      logger.info(`Generating response using real AI service for message: ${message}`)
+      
+      // Use the real AI service for actual AI responses
+      const aiResponse = await realAIService.generateResponse(message, personality, 'gpt-3.5-turbo')
+      
+      const adjustedResponse = this.adjustResponseByPersonality(aiResponse.text, personality)
 
       return {
-        original: result.answer,
+        original: aiResponse.text,
         adjusted: adjustedResponse,
-        confidence: result.confidence || 0.75,
+        confidence: aiResponse.confidence || 0.8,
         model: modelName,
-        effectiveModel: modelConfig.effectiveModel,
-        industry: modelConfig.industry,
+        effectiveModel: aiResponse.model || 'real-ai',
+        industry: 'General',
         capabilities: MODEL_CAPABILITIES[modelName] || [],
-        usedFallback: result.usedFallback || false,
+        usedFallback: false,
+        source: aiResponse.source || 'real-ai'
       }
     } catch (error) {
       logger.error("Error generating response:", error)
 
-      // Generate intelligent response based on user input
+      // Fallback to intelligent response if real AI fails
       const intelligentResponse = this.generateIntelligentResponse(message, personality)
       
       return {
         original: intelligentResponse,
         adjusted: intelligentResponse,
-        confidence: 0.8,
+        confidence: 0.7,
         model: modelName,
         usedFallback: true,
       }

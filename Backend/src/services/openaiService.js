@@ -1,6 +1,7 @@
 import { OpenAI } from 'openai';
 import PersonalityProcessor from '../utils/personalityProcessor.js';
 import axios from 'axios';
+import realAIService from './realAIService.js';
 
 class OpenAIService {
   constructor() {
@@ -56,59 +57,21 @@ class OpenAIService {
   }
 
   async generateResponse(text, personalitySettings, modelType = 'gpt-4-turbo') {
-    if (!this.openai) {
-      // Return an intelligent fallback response instead of throwing
-      const fallbackResponses = [
-        "That's an interesting question! Let me help you with that.",
-        "I understand what you're asking. Let me provide some insight on this topic.",
-        "Great question! I'd be happy to help you with that.",
-        "I can help you with that. Let me share some information.",
-        "That's a good point. Here's what I can tell you about that.",
-        "I'm here to help! Let me address your question.",
-        "Thanks for asking! I can provide some guidance on that.",
-        "I'd be glad to help you with that topic."
-      ]
-      
-      const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
-      
-      return {
-        text: randomResponse,
-        confidence: 0.6,
-        sentiment: 0.5,
-        usedFallback: true
-      };
-    }
-    
-    // Process personality traits
-    const processedTraits = PersonalityProcessor.processPersonalityTraits(personalitySettings);
-
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: modelType,
-        messages: [
-          { 
-            role: "system", 
-            content: processedTraits.systemPrompt
-          },
-          { role: "user", content: text }
-        ],
-        max_tokens: 300,
-        temperature: processedTraits.temperature,
-        top_p: processedTraits.topP
-      });
-
-      // Sentiment analysis
-      const sentiment = await this.analyzeSentiment(text);
-
+      // Use the real AI service for actual AI responses
+      const aiResponse = await realAIService.generateResponse(text, personalitySettings, modelType);
+      
       return {
-        text: completion.choices[0].message.content,
-        confidence: this.calculateConfidence(completion),
-        sentiment
+        text: aiResponse.text,
+        confidence: aiResponse.confidence,
+        sentiment: 0.5,
+        usedFallback: false,
+        source: aiResponse.source || 'real-ai'
       };
     } catch (error) {
       console.error('Response Generation Error:', error);
       
-      // Return an intelligent fallback response instead of throwing
+      // Fallback to intelligent response if real AI fails
       const fallbackResponses = [
         "That's an interesting question! Let me help you with that.",
         "I understand what you're asking. Let me provide some insight on this topic.",
