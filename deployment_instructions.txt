@@ -1,3 +1,30 @@
+
+=== DEPLOYMENT INSTRUCTIONS ===
+
+1. SSH to your server:
+   ssh root@168.231.114.68
+
+2. Navigate to the services directory:
+   cd /var/www/multibotplatform/Backend/src/services/
+
+3. Backup the current file (optional):
+   cp enhancedAIService.js enhancedAIService.js.backup
+
+4. Create/Edit the enhanced AI service file:
+   nano enhancedAIService.js
+
+5. Copy and paste the following content:
+   (The file content will be shown below)
+
+6. Save the file (Ctrl+X, then Y, then Enter)
+
+7. Restart the backend:
+   pm2 restart multibot-backend
+
+8. Check the logs:
+   pm2 logs multibot-backend
+
+=== FILE CONTENT ===
 import axios from 'axios';
 
 class EnhancedAIService {
@@ -312,3 +339,4 @@ class EnhancedAIService {
 }
 
 export default new EnhancedAIService();
+

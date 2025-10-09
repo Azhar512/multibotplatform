@@ -1,0 +1,27 @@
+HUGGINGFACE API TOKEN: [YOUR_HUGGINGFACE_TOKEN_HERE]
+
+=== SERVER UPDATE INSTRUCTIONS ===
+
+1. UPDATE .env FILE ON SERVER:
+   Location: /var/www/multibotplatform/Backend/.env
+   
+   Add or update this line:
+   HUGGINGFACE_API_KEY=[YOUR_HUGGINGFACE_TOKEN_HERE]
+
+2. COPY ENHANCED AI SERVICE:
+   Source: C:\Users\speed\Desktop\multibotplatform\Backend\src\services\enhancedAIService.js
+   Destination: /var/www/multibotplatform/Backend/src/services/enhancedAIService.js
+
+3. RESTART BACKEND:
+   Run: pm2 restart multibot-backend
+
+4. TEST ALL MODELS:
+   Use the test scripts provided
+
+=== EXPECTED RESULTS AFTER UPDATE ===
+- All models will provide real-time, intelligent answers
+- Prime Minister questions will return: "As of 2024, the Prime Minister of India is Narendra Modi."
+- Science questions will return detailed explanations
+- Math questions will return correct calculations
+- Geography questions will return accurate capital cities
+- HuggingFace API will work for additional AI responses
