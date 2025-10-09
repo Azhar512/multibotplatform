@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import PersonalityProcessor from '../utils/personalityProcessor.js';
 import axios from 'axios';
-import realTimeAIService from './realTimeAIService.js';
+// Remove the import that was causing issues
 
 class OpenAIService {
   constructor() {
@@ -58,15 +58,33 @@ class OpenAIService {
 
   async generateResponse(text, personalitySettings, modelType = 'gpt-4-turbo') {
     try {
-      // Use the real-time AI service for actual AI responses
-      const aiResponse = await realTimeAIService.generateResponse(text, personalitySettings, modelType);
-      
+      // Use the original OpenAI service logic
+      if (!this.openai) {
+        throw new Error('OpenAI API key not configured');
+      }
+
+      const completion = await this.openai.chat.completions.create({
+        model: modelType,
+        messages: [
+          {
+            role: 'system',
+            content: this.buildSystemPrompt(personalitySettings)
+          },
+          {
+            role: 'user',
+            content: text
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.7
+      });
+
       return {
-        text: aiResponse.text,
-        confidence: aiResponse.confidence,
+        text: completion.choices[0].message.content,
+        confidence: this.calculateConfidence(completion),
         sentiment: 0.5,
         usedFallback: false,
-        source: aiResponse.source || 'real-ai'
+        source: 'openai'
       };
     } catch (error) {
       console.error('Response Generation Error:', error);
@@ -129,6 +147,22 @@ class OpenAIService {
       console.error('Sentiment Analysis Error:', error);
       return 0; // Neutral sentiment if analysis fails
     }
+  }
+
+  buildSystemPrompt(personality) {
+    const { Empathy = 70, Assertiveness = 60, Humour = 50, Patience = 80, Confidence = 60 } = personality;
+    
+    let prompt = "You are a helpful AI assistant.";
+    
+    if (Empathy > 75) prompt += " You are empathetic and understanding.";
+    if (Assertiveness > 75) prompt += " You are confident and direct in your responses.";
+    if (Humour > 70) prompt += " You have a friendly sense of humor and can be lighthearted when appropriate.";
+    if (Patience > 80) prompt += " You are patient and thoughtful in your responses.";
+    if (Confidence > 75) prompt += " You are knowledgeable and assured in your answers.";
+    
+    prompt += " Provide helpful, accurate, and engaging responses to user questions and requests.";
+    
+    return prompt;
   }
 
   calculateConfidence(completion) {

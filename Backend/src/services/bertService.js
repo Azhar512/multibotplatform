@@ -2,7 +2,7 @@ import { HfInference } from "@huggingface/inference"
 import dotenv from "dotenv"
 import { BERT_MODELS, MODEL_CAPABILITIES, FALLBACK_CONFIG } from "../config/models.js"
 import { serviceLogger as logger } from "../config/logger.js"
-import realTimeAIService from "./realTimeAIService.js"
+// Remove the import that was causing issues
 
 dotenv.config()
 
@@ -169,21 +169,22 @@ class BertService {
     try {
       logger.info(`Generating response using real AI service for message: ${message}`)
       
-      // Use the real-time AI service for actual AI responses
-      const aiResponse = await realTimeAIService.generateResponse(message, personality, 'gpt-3.5-turbo')
+      // Use the original BERT service logic
+      const model = await this.loadModel(modelName)
+      const response = await this.handleTextGeneration(message, model, null)
       
-      const adjustedResponse = this.adjustResponseByPersonality(aiResponse.text, personality)
+      const adjustedResponse = this.adjustResponseByPersonality(response.answer, personality)
 
       return {
-        original: aiResponse.text,
+        original: response.answer,
         adjusted: adjustedResponse,
-        confidence: aiResponse.confidence || 0.8,
+        confidence: response.confidence || 0.8,
         model: modelName,
-        effectiveModel: aiResponse.model || 'real-ai',
+        effectiveModel: model.effectiveModel || modelName,
         industry: 'General',
         capabilities: MODEL_CAPABILITIES[modelName] || [],
-        usedFallback: false,
-        source: aiResponse.source || 'real-ai'
+        usedFallback: response.usedFallback || false,
+        source: 'huggingface'
       }
     } catch (error) {
       logger.error("Error generating response:", error)
