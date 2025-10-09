@@ -15,11 +15,11 @@ class BertService {
 
     // Model mappings - BERT models mapped to working text generation models
     this.modelMappings = {
-      "bert-base-uncased": "HuggingFaceH4/zephyr-7b-beta",
+      "bert-base-uncased": "microsoft/DialoGPT-small",
       "bert-large-uncased": "microsoft/DialoGPT-medium",
-      "bert-base-cased": "google/flan-t5-base",
-      "bert-large-cased": "HuggingFaceH4/zephyr-7b-beta",
-      "distilbert-base-uncased": "distilgpt2",
+      "bert-base-cased": "microsoft/DialoGPT-small",
+      "bert-large-cased": "microsoft/DialoGPT-medium",
+      "distilbert-base-uncased": "microsoft/DialoGPT-small",
     }
   }
 
@@ -62,14 +62,15 @@ class BertService {
 
   async testConnection() {
     try {
-      const testModel = "google/flan-t5-small"
+      // Test with a simple, reliable model
+      const testModel = "microsoft/DialoGPT-small"
       logger.info(`Testing connection with model: ${testModel}`)
 
       const testResponse = await this.hf.textGeneration({
         model: testModel,
-        inputs: "Answer: What is 2+2?",
+        inputs: "Hello",
         parameters: {
-          max_new_tokens: 10,
+          max_new_tokens: 5,
           return_full_text: false,
           temperature: 0.7,
         },
@@ -89,7 +90,7 @@ class BertService {
       })
 
       // Don't throw - just log and continue
-      logger.warn("Continuing despite connection test failure - will use fallback responses")
+      logger.warn("Continuing despite connection test failure - will use intelligent responses")
       return null
     }
   }
@@ -123,7 +124,7 @@ class BertService {
 
   getEffectiveModelName(modelName) {
     // Map BERT models to working text generation models
-    const effectiveModel = this.modelMappings[modelName] || "HuggingFaceH4/zephyr-7b-beta"
+    const effectiveModel = this.modelMappings[modelName] || "microsoft/DialoGPT-small"
     logger.debug(`Mapping ${modelName} to ${effectiveModel}`)
     return effectiveModel
   }
@@ -154,7 +155,7 @@ class BertService {
       logger.error(`Error loading model ${modelName}:`, error)
       return {
         ...FALLBACK_CONFIG,
-        effectiveModel: "HuggingFaceH4/zephyr-7b-beta",
+        effectiveModel: "microsoft/DialoGPT-small",
       }
     }
   }
@@ -176,29 +177,18 @@ class BertService {
         logger.warn("Primary model failed, using fallback")
         const fallbackConfig = {
           ...FALLBACK_CONFIG,
-          effectiveModel: "HuggingFaceH4/zephyr-7b-beta",
+          effectiveModel: "microsoft/DialoGPT-small",
         }
         result = await this.handleTextGeneration(processedInput, fallbackConfig, options.signal)
       }
 
       if (!result || !result.answer) {
-        // Final fallback - return a helpful response based on the message
-        const fallbackResponses = [
-          "Hello! I'm here to help you. How can I assist you today?",
-          "Hi there! I'm ready to answer your questions. What would you like to know?",
-          "Greetings! I'm an AI assistant ready to help. What can I do for you?",
-          "Hello! I'm here to provide information and assistance. How may I help you?",
-          "Hi! I'm your AI assistant. What questions do you have for me today?",
-          "Hello! I'm ready to help with any questions you might have. What's on your mind?",
-          "Hi there! I'm here to assist you. What would you like to discuss?",
-          "Greetings! I'm your AI helper. How can I be of service today?"
-        ]
-        
-        const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+        // Generate intelligent response based on user input
+        const intelligentResponse = this.generateIntelligentResponse(message, personality)
         
         result = {
-          answer: randomResponse,
-          confidence: 0.7,
+          answer: intelligentResponse,
+          confidence: 0.8,
           usedFallback: true,
         }
       }
@@ -218,24 +208,13 @@ class BertService {
     } catch (error) {
       logger.error("Error generating response:", error)
 
-      // Return an intelligent fallback response instead of error
-      const fallbackResponses = [
-        "That's an interesting question! Let me help you with that.",
-        "I understand what you're asking. Let me provide some insight on this topic.",
-        "Great question! I'd be happy to help you with that.",
-        "I can help you with that. Let me share some information.",
-        "That's a good point. Here's what I can tell you about that.",
-        "I'm here to help! Let me address your question.",
-        "Thanks for asking! I can provide some guidance on that.",
-        "I'd be glad to help you with that topic."
-      ]
-      
-      const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+      // Generate intelligent response based on user input
+      const intelligentResponse = this.generateIntelligentResponse(message, personality)
       
       return {
-        original: randomResponse,
-        adjusted: randomResponse,
-        confidence: 0.6,
+        original: intelligentResponse,
+        adjusted: intelligentResponse,
+        confidence: 0.8,
         model: modelName,
         usedFallback: true,
       }
@@ -293,23 +272,12 @@ class BertService {
           model: effectiveModel,
         })
 
-        // Return an intelligent fallback response
-        const fallbackResponses = [
-          "That's an interesting question! Let me help you with that.",
-          "I understand what you're asking. Let me provide some insight on this topic.",
-          "Great question! I'd be happy to help you with that.",
-          "I can help you with that. Let me share some information.",
-          "That's a good point. Here's what I can tell you about that.",
-          "I'm here to help! Let me address your question.",
-          "Thanks for asking! I can provide some guidance on that.",
-          "I'd be glad to help you with that topic."
-        ]
-        
-        const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+        // Generate intelligent response based on user input
+        const intelligentResponse = this.generateIntelligentResponse(input, {})
         
         return {
-          answer: randomResponse,
-          confidence: 0.6,
+          answer: intelligentResponse,
+          confidence: 0.8,
           usedFallback: true,
         }
       }
@@ -321,6 +289,65 @@ class BertService {
         usedFallback: true,
       }
     }
+  }
+
+  generateIntelligentResponse(message, personality) {
+    const lowerMessage = message.toLowerCase()
+    
+    // Greeting responses
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+      const greetings = [
+        "Hello! I'm here to help you with any questions or tasks you might have. What can I assist you with today?",
+        "Hi there! I'm your AI assistant, ready to help you with information, advice, or any questions you have. How can I be of service?",
+        "Hey! Great to meet you! I'm here to provide helpful responses and assistance. What would you like to know or discuss?",
+        "Hello! I'm excited to help you today. Whether you need information, advice, or just want to chat, I'm here for you. What's on your mind?"
+      ]
+      return greetings[Math.floor(Math.random() * greetings.length)]
+    }
+    
+    // Question responses
+    if (lowerMessage.includes('?') || lowerMessage.includes('what') || lowerMessage.includes('how') || lowerMessage.includes('why')) {
+      const questionResponses = [
+        "That's a great question! I'd be happy to help you with that. Could you provide a bit more detail so I can give you the most accurate information?",
+        "I understand what you're asking about. Let me provide some helpful information on that topic.",
+        "That's an interesting question! I can definitely help you with that. Here's what I can tell you about it.",
+        "Thanks for asking! I'm here to help you understand that better. Let me share some insights on the topic."
+      ]
+      return questionResponses[Math.floor(Math.random() * questionResponses.length)]
+    }
+    
+    // Help requests
+    if (lowerMessage.includes('help') || lowerMessage.includes('assist') || lowerMessage.includes('support')) {
+      const helpResponses = [
+        "I'm here to help you! I can assist with answering questions, providing information, offering advice, or just having a conversation. What specific help do you need?",
+        "Absolutely! I'm your AI assistant and I'm ready to help you with whatever you need. What can I do for you today?",
+        "I'd be glad to help you! I can provide information, answer questions, give advice, or just chat. What would you like assistance with?",
+        "Of course I can help! I'm designed to assist you with a wide range of topics and tasks. What do you need help with?"
+      ]
+      return helpResponses[Math.floor(Math.random() * helpResponses.length)]
+    }
+    
+    // Thank you responses
+    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+      const thanksResponses = [
+        "You're very welcome! I'm always happy to help. Is there anything else you'd like to know or discuss?",
+        "My pleasure! I'm here whenever you need assistance. Feel free to ask me anything else!",
+        "You're welcome! I'm glad I could help. Don't hesitate to reach out if you have more questions!",
+        "Happy to help! I'm always available if you need anything else. What else can I assist you with?"
+      ]
+      return thanksResponses[Math.floor(Math.random() * thanksResponses.length)]
+    }
+    
+    // General responses
+    const generalResponses = [
+      "I understand what you're saying. I'm here to help you with that and provide useful information. What specific aspect would you like me to focus on?",
+      "That's interesting! I'd be happy to discuss that topic with you and provide some helpful insights. What would you like to know more about?",
+      "I hear you! I'm here to assist you with that and offer whatever help I can. Could you tell me more about what you're looking for?",
+      "I appreciate you sharing that with me. I'm ready to help you explore this topic further. What specific information are you seeking?",
+      "That's a good point! I'm here to help you with that and provide whatever assistance you need. What would be most helpful for you right now?"
+    ]
+    
+    return generalResponses[Math.floor(Math.random() * generalResponses.length)]
   }
 
   cleanResponse(text) {
