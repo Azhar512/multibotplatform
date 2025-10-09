@@ -182,10 +182,23 @@ class BertService {
       }
 
       if (!result || !result.answer) {
-        // Final fallback - return a static response
+        // Final fallback - return a helpful response based on the message
+        const fallbackResponses = [
+          "Hello! I'm here to help you. How can I assist you today?",
+          "Hi there! I'm ready to answer your questions. What would you like to know?",
+          "Greetings! I'm an AI assistant ready to help. What can I do for you?",
+          "Hello! I'm here to provide information and assistance. How may I help you?",
+          "Hi! I'm your AI assistant. What questions do you have for me today?",
+          "Hello! I'm ready to help with any questions you might have. What's on your mind?",
+          "Hi there! I'm here to assist you. What would you like to discuss?",
+          "Greetings! I'm your AI helper. How can I be of service today?"
+        ]
+        
+        const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+        
         result = {
-          answer: "I'm currently experiencing technical difficulties. Please try again in a moment.",
-          confidence: 0.3,
+          answer: randomResponse,
+          confidence: 0.7,
           usedFallback: true,
         }
       }

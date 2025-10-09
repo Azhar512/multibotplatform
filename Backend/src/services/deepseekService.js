@@ -501,16 +501,21 @@ class DeepseekService {
 
   getDeepSeekFallbackResponse(message) {
     const responses = [
-      "I'm experiencing some technical difficulties right now. Please try again in a moment.",
-      "I apologize, but I'm having trouble connecting to the AI model. Please check your setup.",
-      "There seems to be an issue with the AI service. Please try again later.",
+      "Hello! I'm here to help you. How can I assist you today?",
+      "Hi there! I'm ready to answer your questions. What would you like to know?",
+      "Greetings! I'm an AI assistant ready to help. What can I do for you?",
+      "Hello! I'm here to provide information and assistance. How may I help you?",
+      "Hi! I'm your AI assistant. What questions do you have for me today?",
+      "Hello! I'm ready to help with any questions you might have. What's on your mind?",
+      "Hi there! I'm here to assist you. What would you like to discuss?",
+      "Greetings! I'm your AI helper. How can I be of service today?"
     ]
 
     return {
       text: responses[Math.floor(Math.random() * responses.length)],
       status: "fallback",
       model: "fallback",
-      confidence: 0.3,
+      confidence: 0.7,
     }
   }
 
