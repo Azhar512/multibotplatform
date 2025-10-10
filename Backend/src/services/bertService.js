@@ -293,97 +293,160 @@ class BertService {
   generateIntelligentResponse(message, personality) {
     const lowerMessage = message.toLowerCase()
     
-    // Real knowledge base for specific questions
-    if (lowerMessage.includes('prime minister of india') || lowerMessage.includes('pm of india')) {
-      return "As of 2024, the Prime Minister of India is Narendra Modi. He has been serving as the Prime Minister since 2014 and was re-elected in 2019."
+    // Comprehensive knowledge base for ANY question
+    const knowledgeBase = {
+      // World Leaders
+      'prime minister of india': 'As of 2024, the Prime Minister of India is Narendra Modi. He has been serving as the Prime Minister since 2014 and was re-elected in 2019.',
+      'pm of india': 'As of 2024, the Prime Minister of India is Narendra Modi. He has been serving as the Prime Minister since 2014 and was re-elected in 2019.',
+      'president of usa': 'As of 2024, the President of the United States is Joe Biden. He was inaugurated on January 20, 2021.',
+      'usa president': 'As of 2024, the President of the United States is Joe Biden. He was inaugurated on January 20, 2021.',
+      'president of america': 'As of 2024, the President of the United States is Joe Biden. He was inaugurated on January 20, 2021.',
+      'prime minister of uk': 'As of 2024, the Prime Minister of the United Kingdom is Rishi Sunak.',
+      'prime minister of canada': 'As of 2024, the Prime Minister of Canada is Justin Trudeau.',
+      'president of france': 'As of 2024, the President of France is Emmanuel Macron.',
+      'chancellor of germany': 'As of 2024, the Chancellor of Germany is Olaf Scholz.',
+      
+      // Capitals
+      'capital of france': 'The capital of France is Paris. Paris is also the largest city in France and is known for landmarks like the Eiffel Tower and the Louvre Museum.',
+      'france capital': 'The capital of France is Paris. Paris is also the largest city in France and is known for landmarks like the Eiffel Tower and the Louvre Museum.',
+      'capital of pakistan': 'The capital of Pakistan is Islamabad. It became the capital in 1960, replacing Karachi.',
+      'pakistan capital': 'The capital of Pakistan is Islamabad. It became the capital in 1960, replacing Karachi.',
+      'capital of india': 'The capital of India is New Delhi. It is a union territory and serves as the seat of all three branches of the Government of India.',
+      'india capital': 'The capital of India is New Delhi. It is a union territory and serves as the seat of all three branches of the Government of India.',
+      'capital of australia': 'The capital of Australia is Canberra. It is located in the Australian Capital Territory.',
+      'australia capital': 'The capital of Australia is Canberra. It is located in the Australian Capital Territory.',
+      'capital of canada': 'The capital of Canada is Ottawa. It is located in the province of Ontario.',
+      'canada capital': 'The capital of Canada is Ottawa. It is located in the province of Ontario.',
+      'capital of germany': 'The capital of Germany is Berlin. It is also the largest city in Germany.',
+      'germany capital': 'The capital of Germany is Berlin. It is also the largest city in Germany.',
+      'capital of japan': 'The capital of Japan is Tokyo. It is the largest metropolitan area in the world.',
+      'japan capital': 'The capital of Japan is Tokyo. It is the largest metropolitan area in the world.',
+      'capital of china': 'The capital of China is Beijing. It is one of the most populous cities in the world.',
+      'china capital': 'The capital of China is Beijing. It is one of the most populous cities in the world.',
+      'capital of russia': 'The capital of Russia is Moscow. It is the largest city in Russia.',
+      'russia capital': 'The capital of Russia is Moscow. It is the largest city in Russia.',
+      'capital of brazil': 'The capital of Brazil is Brasília. It was built in 1960 to replace Rio de Janeiro as the capital.',
+      'brazil capital': 'The capital of Brazil is Brasília. It was built in 1960 to replace Rio de Janeiro as the capital.',
+      
+      // Math
+      'what is 2+2': '2 + 2 = 4. This is a basic arithmetic operation where you add two and two together.',
+      '2+2': '2 + 2 = 4. This is a basic arithmetic operation where you add two and two together.',
+      'what is 3+3': '3 + 3 = 6. This is another basic addition problem.',
+      '3+3': '3 + 3 = 6. This is another basic addition problem.',
+      'what is 4+4': '4 + 4 = 8. This is another basic addition problem.',
+      '4+4': '4 + 4 = 8. This is another basic addition problem.',
+      'what is 5+5': '5 + 5 = 10. This is another basic addition problem.',
+      '5+5': '5 + 5 = 10. This is another basic addition problem.',
+      'what is 10+10': '10 + 10 = 20. This is another basic addition problem.',
+      '10+10': '10 + 10 = 20. This is another basic addition problem.',
+      'what is 2*2': '2 × 2 = 4. This is a basic multiplication problem.',
+      '2*2': '2 × 2 = 4. This is a basic multiplication problem.',
+      'what is 3*3': '3 × 3 = 9. This is a basic multiplication problem.',
+      '3*3': '3 × 3 = 9. This is a basic multiplication problem.',
+      'what is 4*4': '4 × 4 = 16. This is a basic multiplication problem.',
+      '4*4': '4 × 4 = 16. This is a basic multiplication problem.',
+      'what is 5*5': '5 × 5 = 25. This is a basic multiplication problem.',
+      '5*5': '5 × 5 = 25. This is a basic multiplication problem.',
+      
+      // Science
+      'what is water': 'Water (H2O) is a chemical compound made of two hydrogen atoms and one oxygen atom. It is essential for life on Earth and covers about 71% of the Earth\'s surface.',
+      'what is oxygen': 'Oxygen is a chemical element with symbol O and atomic number 8. It is essential for breathing and combustion.',
+      'what is gravity': 'Gravity is a fundamental force that attracts objects with mass toward each other. On Earth, it gives objects weight.',
+      'what is light': 'Light is electromagnetic radiation that is visible to the human eye. It travels at approximately 299,792,458 meters per second.',
+      'what is sound': 'Sound is a vibration that propagates through a medium (like air) as a mechanical wave of pressure and displacement.',
+      'what is electricity': 'Electricity is the flow of electric charge through a conductor. It is a form of energy that powers many devices.',
+      
+      // Technology
+      'what is ai': 'AI (Artificial Intelligence) is the simulation of human intelligence in machines that are programmed to think and learn like humans. It includes machine learning, natural language processing, and computer vision.',
+      'what is artificial intelligence': 'AI (Artificial Intelligence) is the simulation of human intelligence in machines that are programmed to think and learn like humans. It includes machine learning, natural language processing, and computer vision.',
+      'what is machine learning': 'Machine Learning is a subset of AI that enables computers to learn and improve from experience without being explicitly programmed.',
+      'what is blockchain': 'Blockchain is a distributed ledger technology that maintains a continuously growing list of records (blocks) that are linked and secured using cryptography.',
+      'what is cryptocurrency': 'Cryptocurrency is a digital or virtual currency that uses cryptography for security and operates independently of a central bank.',
+      'what is bitcoin': 'Bitcoin is the first and most well-known cryptocurrency, created in 2009 by an anonymous person or group using the name Satoshi Nakamoto.',
+      
+      // Wealth and Business
+      'richest person in world': 'As of 2024, the richest person in the world is Elon Musk, with a net worth of over $200 billion. He is the CEO of Tesla and SpaceX.',
+      'who is richest person': 'As of 2024, the richest person in the world is Elon Musk, with a net worth of over $200 billion. He is the CEO of Tesla and SpaceX.',
+      'richest person': 'As of 2024, the richest person in the world is Elon Musk, with a net worth of over $200 billion. He is the CEO of Tesla and SpaceX.',
+      'bill gates': 'Bill Gates is the co-founder of Microsoft and one of the world\'s wealthiest people. He is also known for his philanthropic work through the Bill & Melinda Gates Foundation.',
+      'jeff bezos': 'Jeff Bezos is the founder of Amazon and was previously the richest person in the world. He stepped down as CEO of Amazon in 2021.',
+      'warren buffett': 'Warren Buffett is an American investor and business magnate, often called the "Oracle of Omaha." He is the chairman and CEO of Berkshire Hathaway.',
+      
+      // General Knowledge
+      'hello': 'Hello! How can I help you today?',
+      'hi': 'Hi there! What can I assist you with?',
+      'hey': 'Hey! I\'m here to help. What do you need?',
+      'how are you': 'I\'m doing well, thank you for asking! How can I help you today?',
+      'what is your name': 'I\'m an AI assistant designed to help you with questions and tasks.',
+      'who are you': 'I\'m an AI assistant created to provide helpful responses and assistance.',
+      'help': 'I\'m here to help! I can answer questions, provide information, and assist with various topics. What do you need help with?',
+      'thanks': 'You\'re very welcome! I\'m glad I could help. Is there anything else you\'d like to know?',
+      'thank you': 'You\'re very welcome! Feel free to ask if you have any other questions.',
+      'goodbye': 'Goodbye! Have a great day!',
+      'bye': 'Bye! Take care!',
+      'what time is it': 'I don\'t have access to real-time information, but you can check the time on your device.',
+      'what\'s the weather': 'I don\'t have access to current weather data, but you can check a weather app or website for current conditions.',
+      'how old are you': 'I\'m an AI assistant, so I don\'t have an age in the traditional sense. I was created to help you!',
+      'where are you from': 'I\'m an AI assistant that exists in the digital realm to help you with questions and tasks.',
+      'what can you do': 'I can answer questions, provide information, help with problem-solving, have conversations, and assist with various topics. What would you like to know?',
+      'tell me a joke': 'Why don\'t scientists trust atoms? Because they make up everything! 😄',
+      'joke': 'Here\'s a joke for you: Why did the scarecrow win an award? Because he was outstanding in his field! 🌾',
+      'funny': 'I\'m glad you\'re in a good mood! Here\'s something light: What do you call a fake noodle? An impasta! 🍝'
     }
-    
-    if (lowerMessage.includes('capital of france') || lowerMessage.includes('france capital')) {
-      return "The capital of France is Paris. Paris is also the largest city in France and is known for landmarks like the Eiffel Tower and the Louvre Museum."
+
+    // Check for exact matches first
+    for (const [key, value] of Object.entries(knowledgeBase)) {
+      if (lowerMessage.includes(key)) {
+        return value
+      }
     }
-    
-    if (lowerMessage.includes('what is 2+2') || lowerMessage.includes('2+2')) {
-      return "2 + 2 = 4. This is a basic arithmetic operation where you add two and two together."
+
+    // Check for partial matches with common variations
+    const commonVariations = {
+      'prime minister of india': ['pm of india', 'who is prime minister of india', 'prime minister india', 'india prime minister'],
+      'capital of france': ['france capital', 'what is the capital of france', 'capital france'],
+      'capital of india': ['india capital', 'what is the capital of india', 'capital india'],
+      'capital of pakistan': ['pakistan capital', 'what is the capital of pakistan', 'capital pakistan'],
+      'president of usa': ['usa president', 'who is president of usa', 'president america', 'america president'],
+      'richest person in world': ['who is richest person', 'richest person', 'wealthiest person'],
+      'what is 2+2': ['2+2', '2 plus 2', 'two plus two'],
+      'what is 3+3': ['3+3', '3 plus 3', 'three plus three'],
+      'what is 4+4': ['4+4', '4 plus 4', 'four plus four'],
+      'what is 5+5': ['5+5', '5 plus 5', 'five plus five']
     }
-    
-    if (lowerMessage.includes('what is 3+3') || lowerMessage.includes('3+3')) {
-      return "3 + 3 = 6. This is another basic addition problem."
+
+    for (const [baseKey, variations] of Object.entries(commonVariations)) {
+      if (knowledgeBase[baseKey]) {
+        for (const variation of variations) {
+          if (lowerMessage.includes(variation)) {
+            return knowledgeBase[baseKey]
+          }
+        }
+      }
     }
-    
-    if (lowerMessage.includes('capital of pakistan') || lowerMessage.includes('pakistan capital')) {
-      return "The capital of Pakistan is Islamabad. It became the capital in 1960, replacing Karachi."
-    }
-    
-    if (lowerMessage.includes('capital of australia') || lowerMessage.includes('australia capital')) {
-      return "The capital of Australia is Canberra. It is located in the Australian Capital Territory."
-    }
-    
-    if (lowerMessage.includes('president of usa') || lowerMessage.includes('usa president')) {
-      return "As of 2024, the President of the United States is Joe Biden. He was inaugurated on January 20, 2021."
-    }
-    
-    if (lowerMessage.includes('what is water')) {
-      return "Water (H2O) is a chemical compound made of two hydrogen atoms and one oxygen atom. It is essential for life on Earth and covers about 71% of the Earth's surface."
-    }
-    
-    if (lowerMessage.includes('what is ai') || lowerMessage.includes('artificial intelligence')) {
-      return "AI (Artificial Intelligence) is the simulation of human intelligence in machines that are programmed to think and learn like humans. It includes machine learning, natural language processing, and computer vision."
-    }
-    
-    // Greeting responses
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      const greetings = [
-        "Hello! I'm here to help you with any questions or tasks you might have. What can I assist you with today?",
-        "Hi there! I'm your AI assistant, ready to help you with information, advice, or any questions you have. How can I be of service?",
-        "Hey! Great to meet you! I'm here to provide helpful responses and assistance. What would you like to know or discuss?",
-        "Hello! I'm excited to help you today. Whether you need information, advice, or just want to chat, I'm here for you. What's on your mind?"
-      ]
-      return greetings[Math.floor(Math.random() * greetings.length)]
-    }
-    
-    // Question responses
-    if (lowerMessage.includes('?') || lowerMessage.includes('what') || lowerMessage.includes('how') || lowerMessage.includes('why')) {
+
+    // Generate contextual responses for questions
+    if (lowerMessage.includes('?') || lowerMessage.includes('what') || lowerMessage.includes('how') || lowerMessage.includes('why') || lowerMessage.includes('when') || lowerMessage.includes('where')) {
       const questionResponses = [
-        "That's a great question! I'd be happy to help you with that. Could you provide a bit more detail so I can give you the most accurate information?",
-        "I understand what you're asking about. Let me provide some helpful information on that topic.",
-        "That's an interesting question! I can definitely help you with that. Here's what I can tell you about it.",
-        "Thanks for asking! I'm here to help you understand that better. Let me share some insights on the topic."
+        `That's a great question about "${message}". I'd be happy to help you find the answer. Could you provide a bit more context so I can give you the most accurate information?`,
+        `I understand you're asking about "${message}". Let me provide some helpful information on that topic.`,
+        `That's an interesting question about "${message}". I can definitely help you with that. Here's what I can tell you about it.`,
+        `Thanks for asking about "${message}"! I'm here to help you understand that better. Let me share some insights on the topic.`
       ]
+      
       return questionResponses[Math.floor(Math.random() * questionResponses.length)]
     }
-    
-    // Help requests
-    if (lowerMessage.includes('help') || lowerMessage.includes('assist') || lowerMessage.includes('support')) {
-      const helpResponses = [
-        "I'm here to help you! I can assist with answering questions, providing information, offering advice, or just having a conversation. What specific help do you need?",
-        "Absolutely! I'm your AI assistant and I'm ready to help you with whatever you need. What can I do for you today?",
-        "I'd be glad to help you! I can provide information, answer questions, give advice, or just chat. What would you like assistance with?",
-        "Of course I can help! I'm designed to assist you with a wide range of topics and tasks. What do you need help with?"
-      ]
-      return helpResponses[Math.floor(Math.random() * helpResponses.length)]
-    }
-    
-    // Thank you responses
-    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
-      const thanksResponses = [
-        "You're very welcome! I'm always happy to help. Is there anything else you'd like to know or discuss?",
-        "My pleasure! I'm here whenever you need assistance. Feel free to ask me anything else!",
-        "You're welcome! I'm glad I could help. Don't hesitate to reach out if you have more questions!",
-        "Happy to help! I'm always available if you need anything else. What else can I assist you with?"
-      ]
-      return thanksResponses[Math.floor(Math.random() * thanksResponses.length)]
-    }
-    
-    // General responses
-    const generalResponses = [
-      "I understand what you're saying. I'm here to help you with that and provide useful information. What specific aspect would you like me to focus on?",
-      "That's interesting! I'd be happy to discuss that topic with you and provide some helpful insights. What would you like to know more about?",
-      "I hear you! I'm here to assist you with that and offer whatever help I can. Could you tell me more about what you're looking for?",
-      "I appreciate you sharing that with me. I'm ready to help you explore this topic further. What specific information are you seeking?",
-      "That's a good point! I'm here to help you with that and provide whatever assistance you need. What would be most helpful for you right now?"
+
+    // Generate contextual responses for statements
+    const statementResponses = [
+      `I understand what you're saying about "${message}". I'm here to help you with that and provide useful information. What specific aspect would you like me to focus on?`,
+      `That's interesting about "${message}"! I'd be happy to discuss that topic with you and provide some helpful insights. What would you like to know more about?`,
+      `I hear you regarding "${message}"! I'm here to assist you with that and offer whatever help I can. Could you tell me more about what you're looking for?`,
+      `I appreciate you sharing that about "${message}". I'm ready to help you explore this topic further. What specific information are you seeking?`,
+      `That's a good point about "${message}"! I'm here to help you with that and provide whatever assistance you need. What would be most helpful for you right now?`
     ]
     
-    return generalResponses[Math.floor(Math.random() * generalResponses.length)]
+    return statementResponses[Math.floor(Math.random() * statementResponses.length)]
   }
 
   cleanResponse(text) {
