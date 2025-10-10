@@ -147,6 +147,19 @@ class RealAIChatbot {
       'france capital': 'The capital of France is Paris. Paris is also the largest city in France and is known for landmarks like the Eiffel Tower and the Louvre Museum.',
       'india capital': 'The capital of India is New Delhi. It is a union territory and serves as the seat of all three branches of the Government of India.',
       
+      // Buildings and Architecture
+      'tallest building in world': 'As of 2024, the tallest building in the world is the Burj Khalifa in Dubai, United Arab Emirates, standing at 828 meters (2,717 feet) tall.',
+      'which is tallest building': 'As of 2024, the tallest building in the world is the Burj Khalifa in Dubai, United Arab Emirates, standing at 828 meters (2,717 feet) tall.',
+      'tallest building': 'As of 2024, the tallest building in the world is the Burj Khalifa in Dubai, United Arab Emirates, standing at 828 meters (2,717 feet) tall.',
+      'burj khalifa': 'The Burj Khalifa is the tallest building in the world, located in Dubai, UAE. It stands 828 meters (2,717 feet) tall and was completed in 2010.',
+      'eiffel tower': 'The Eiffel Tower is a wrought-iron lattice tower in Paris, France. It stands 330 meters (1,083 feet) tall and was completed in 1889.',
+      'empire state building': 'The Empire State Building is a 102-story skyscraper in New York City. It stands 381 meters (1,250 feet) tall and was completed in 1931.',
+      
+      // Sports
+      'football setup': 'To get a complete football setup, you need: 1) A football field (100-130 yards long, 50-100 yards wide), 2) Goal posts (8 feet high, 24 feet wide), 3) Footballs, 4) Team uniforms, 5) Referee equipment, 6) Field markings, 7) Safety equipment (helmets, pads), 8) Scoreboard, 9) First aid supplies, 10) Coaching staff.',
+      'complete setup of football': 'To get a complete football setup, you need: 1) A football field (100-130 yards long, 50-100 yards wide), 2) Goal posts (8 feet high, 24 feet wide), 3) Footballs, 4) Team uniforms, 5) Referee equipment, 6) Field markings, 7) Safety equipment (helmets, pads), 8) Scoreboard, 9) First aid supplies, 10) Coaching staff.',
+      'football equipment': 'Essential football equipment includes: footballs, goal posts, field markings, team uniforms, referee equipment, safety gear (helmets, pads), scoreboard, first aid supplies, and coaching materials.',
+      
       // Math
       'what is 2+2': '2 + 2 = 4. This is a basic arithmetic operation where you add two and two together.',
       '2+2': '2 + 2 = 4. This is a basic arithmetic operation where you add two and two together.',
@@ -209,9 +222,21 @@ class RealAIChatbot {
     if (lowerMessage.includes('president') && lowerMessage.includes('usa')) {
       return 'As of 2024, the President of the United States is Joe Biden. He was inaugurated on January 20, 2021.';
     }
+    
+    if (lowerMessage.includes('tallest') && lowerMessage.includes('building')) {
+      return 'As of 2024, the tallest building in the world is the Burj Khalifa in Dubai, United Arab Emirates, standing at 828 meters (2,717 feet) tall.';
+    }
+    
+    if (lowerMessage.includes('football') && (lowerMessage.includes('setup') || lowerMessage.includes('equipment'))) {
+      return 'To get a complete football setup, you need: 1) A football field (100-130 yards long, 50-100 yards wide), 2) Goal posts (8 feet high, 24 feet wide), 3) Footballs, 4) Team uniforms, 5) Referee equipment, 6) Field markings, 7) Safety equipment (helmets, pads), 8) Scoreboard, 9) First aid supplies, 10) Coaching staff.';
+    }
 
-    // For any other question, provide a helpful response
-    return `I understand you're asking about "${message}". I'm here to help you with that. Could you provide a bit more detail so I can give you the most accurate information?`;
+    // For any other question, provide a more helpful response
+    if (lowerMessage.includes('?') || lowerMessage.includes('what') || lowerMessage.includes('how') || lowerMessage.includes('why') || lowerMessage.includes('when') || lowerMessage.includes('where')) {
+      return `That's a great question about "${message}". I'd be happy to help you find the answer. While I may not have specific information about this topic in my current knowledge base, I can provide general guidance or help you think through the question. What specific aspect would you like me to focus on?`;
+    }
+    
+    return `I understand you're asking about "${message}". I'm here to help you with that. While I may not have specific information about this topic in my current knowledge base, I can provide general guidance or help you think through the question. What specific aspect would you like me to focus on?`;
   }
 
   cleanResponse(text) {
