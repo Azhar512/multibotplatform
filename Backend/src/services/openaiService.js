@@ -141,39 +141,24 @@ class OpenAIService {
 
   async callHuggingFace(message, personality) {
     try {
-      const response = await fetch('https://api-inference.huggingface.co/models/google/flan-t5-base', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          inputs: this.formatMessage(message, personality),
-          parameters: {
-            max_new_tokens: 150,
-            temperature: 0.7,
-            do_sample: true,
-            return_full_text: false,
-            repetition_penalty: 1.1
-          },
-          options: {
-            wait_for_model: true,
-            use_cache: false
-          }
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HuggingFace API error: ${response.status}`)
-      }
-
-      const data = await response.json()
+      const { HfInference } = await import('@huggingface/inference');
+      const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
       
-      if (data && data[0] && data[0].generated_text) {
+      const response = await hf.chatCompletion({
+        model: 'mistralai/Mistral-7B-Instruct-v0.3',
+        messages: [
+          { role: "system", content: this.buildSystemPrompt(personality) },
+          { role: "user", content: message }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      });
+
+      if (response && response.choices && response.choices[0] && response.choices[0].message) {
         return {
-          text: this.cleanResponse(data[0].generated_text),
+          text: this.cleanResponse(response.choices[0].message.content),
           confidence: 0.9,
-          model: 'google/flan-t5-base',
+          model: 'mistralai/Mistral-7B-Instruct-v0.3',
           source: 'huggingface'
         }
       }

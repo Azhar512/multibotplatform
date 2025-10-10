@@ -438,60 +438,52 @@ class DeepseekService {
   }
 
   async generateDirectResponse(message, personality) {
-    const formattedInput = this.formatInput(message, personality)
-    const parameters = this.getParameters(personality)
+    try {
+      // Use chat completion API with working models
+      const { HfInference } = await import('@huggingface/inference');
+      const hf = new HfInference(this.apiKey);
+      
+      console.log(`🤖 Using model: ${this.currentModel} for chat completion`)
+      
+      const response = await hf.chatCompletion({
+        model: this.currentModel,
+        messages: [
+          { role: "system", content: this.buildSystemPrompt(personality) },
+          { role: "user", content: message }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      });
 
-    const response = await fetch(this.workingEndpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        inputs: formattedInput,
-        parameters: parameters,
-        options: {
-          wait_for_model: true,
-          use_cache: false,
-        },
-      }),
-    })
+      if (!response || !response.choices || !response.choices[0] || !response.choices[0].message) {
+        throw new Error("No valid response from HuggingFace API")
+      }
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`API error: ${response.status} - ${errorText}`)
-    }
+      const responseText = response.choices[0].message.content
+      const cleanedText = this.cleanResponse(responseText)
 
-    const data = await response.json()
-    console.log(`📄 Raw API response:`, data)
+      if (!cleanedText || cleanedText.length < 3) {
+        throw new Error("Generated response too short or empty")
+      }
 
-    let responseText = ""
-    if (Array.isArray(data)) {
-      responseText = data[0]?.generated_text || ""
-    } else if (data.generated_text) {
-      responseText = data.generated_text
-    }
+      // Update conversation history
+      this.updateConversationHistory(message, cleanedText)
 
-    const cleanedText = this.cleanResponse(responseText)
+      console.log(`✅ Generated response: ${cleanedText.substring(0, 100)}...`)
 
-    if (!cleanedText || cleanedText.length < 3) {
-      throw new Error("Generated response too short or empty")
-    }
-
-    // Update conversation history
-    this.updateConversationHistory(message, cleanedText)
-
-    console.log(`✅ Generated response: ${cleanedText.substring(0, 100)}...`)
-
-    return {
-      text: cleanedText,
-      status: "success",
-      model: this.currentModel,
-      modelKey: this.currentModelKey,
-      provider: "huggingface-direct",
-      confidence: this.calculateConfidence(cleanedText),
-      personality: personality,
-      raw: responseText,
+      return {
+        text: cleanedText,
+        status: "success",
+        model: this.currentModel,
+        modelKey: this.currentModelKey,
+        provider: "huggingface-chat",
+        confidence: this.calculateConfidence(cleanedText),
+        personality: personality,
+        raw: responseText,
+      }
+    } catch (error) {
+      console.error(`❌ Chat completion error:`, error)
+      throw error
     }
   }
 
