@@ -69,15 +69,15 @@ router.post("/response", validateRequest, async (req, res) => {
   const { message, personality, config } = req.body
 
   try {
-    // Use AI chat service for intelligent responses
-    console.log("Using AI Chat service for response...")
+    // Use DeepSeek service for real HuggingFace API responses
+    console.log("Using DeepSeek service with HuggingFace models...")
     
-    if (!aiChatService.isInitialized) {
-      await aiChatService.initialize()
+    if (!deepseekService.isInitialized) {
+      await deepseekService.initialize()
     }
 
-    console.log("Generating AI response for message:", message)
-    const response = await aiChatService.generateResponse(message, personality, config)
+    console.log("Generating DeepSeek response for message:", message)
+    const response = await deepseekService.generateResponse(message, personality)
 
     let sentiment = null
     if (config?.enableSentiment) {
@@ -86,14 +86,16 @@ router.post("/response", validateRequest, async (req, res) => {
     }
 
     const result = {
-      botResponse: response.response || "I apologize, but I encountered an issue generating a response.",
-      originalResponse: response.response,
-      confidence: 0.8,
+      botResponse: response.text || "I apologize, but I encountered an issue generating a response.",
+      originalResponse: response.text,
+      confidence: response.confidence || 0.9,
       sentiment,
-      model: response.model || "simple-chat",
-      modelType: "chat",
-      status: response.success ? "success" : "error",
-      timestamp: response.timestamp || new Date().toISOString(),
+      model: response.model || "deepseek",
+      modelType: "deepseek",
+      status: response.status || "success",
+      timestamp: new Date().toISOString(),
+      provider: response.provider || "huggingface",
+      isRealTime: response.isRealTime !== false
     }
 
     console.log("Sending successful response")
