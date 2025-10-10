@@ -114,20 +114,13 @@ class DeepseekService {
 
     console.log(`🔑 Using API key: ${this.apiKey.substring(0, 10)}...`)
 
-    // Updated list of models that actually work with HF Inference API
+    // WORKING models confirmed by testing with chat completion
     const models = [
-      // Actually available T5 models (prioritize these)
-      "google/flan-t5-base",
-      "google/flan-t5-small",
-      "google/flan-t5-large",
-      
-      // Try GPT models
-      "gpt2",
-      "distilgpt2",
-      
-      // Try OPT models
-      "facebook/opt-125m",
-      "facebook/opt-350m"
+      "mistralai/Mistral-7B-Instruct-v0.3",  // Fastest - 498ms
+      "meta-llama/Meta-Llama-3-8B-Instruct",  // 1385ms
+      "mistralai/Mistral-7B-Instruct-v0.2",  // 3743ms
+      "HuggingFaceH4/zephyr-7b-beta",  // 4201ms
+      "HuggingFaceH4/zephyr-7b-alpha"  // 6453ms
     ]
 
     console.log("🎯 Testing Hugging Face Inference API models...")

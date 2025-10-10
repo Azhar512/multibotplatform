@@ -13,13 +13,13 @@ class BertService {
     this.hf = null
     this.fallbackModel = "bert-base-uncased"
 
-    // Model mappings - Use actually available models on HuggingFace Inference API
+    // Model mappings - Use WORKING models from HuggingFace with chat completion
     this.modelMappings = {
-      "bert-base-uncased": "google/flan-t5-base",
-      "bert-large-uncased": "google/flan-t5-large",
-      "bert-base-cased": "google/flan-t5-base",
-      "bert-large-cased": "google/flan-t5-large",
-      "distilbert-base-uncased": "google/flan-t5-small",
+      "bert-base-uncased": "mistralai/Mistral-7B-Instruct-v0.3",
+      "bert-large-uncased": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "bert-base-cased": "mistralai/Mistral-7B-Instruct-v0.3",
+      "bert-large-cased": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "distilbert-base-uncased": "mistralai/Mistral-7B-Instruct-v0.2",
     }
   }
 
@@ -62,25 +62,22 @@ class BertService {
 
   async testConnection() {
     try {
-      // Test with a simple, reliable model that's actually available
-      const testModel = "google/flan-t5-small"
+      // Test with a working model using chat completion
+      const testModel = "mistralai/Mistral-7B-Instruct-v0.3"
       logger.info(`Testing connection with model: ${testModel}`)
 
-      const testResponse = await this.hf.textGeneration({
+      const testResponse = await this.hf.chatCompletion({
         model: testModel,
-        inputs: "Hello",
-        parameters: {
-          max_new_tokens: 5,
-          return_full_text: false,
-          temperature: 0.7,
-        },
+        messages: [{ role: "user", content: "Hello" }],
+        max_tokens: 50,
+        temperature: 0.7,
       })
 
-      if (!testResponse || !testResponse.generated_text) {
+      if (!testResponse || !testResponse.choices || !testResponse.choices[0]) {
         throw new Error("No valid response received from HuggingFace API")
       }
 
-      logger.info("HuggingFace connection test successful:", testResponse.generated_text.substring(0, 50))
+      logger.info("HuggingFace connection test successful:", testResponse.choices[0].message.content.substring(0, 50))
       return testResponse
     } catch (error) {
       logger.error("HuggingFace connection test failed:", {
@@ -175,21 +172,18 @@ class BertService {
         
         logger.info(`Using HuggingFace model: ${effectiveModel}`)
         
-        const response = await this.hf.textGeneration({
+        const response = await this.hf.chatCompletion({
           model: effectiveModel,
-          inputs: this.preprocessInput(message, personality, modelConfig),
-          parameters: {
-            max_new_tokens: 150,
-            temperature: 0.7,
-            top_p: 0.9,
-            do_sample: true,
-            return_full_text: false,
-            repetition_penalty: 1.1,
-          },
+          messages: [
+            { role: "system", content: this.buildSystemPrompt(personality, modelConfig) },
+            { role: "user", content: message }
+          ],
+          max_tokens: 150,
+          temperature: 0.7,
         })
 
-        if (response && response.generated_text) {
-          const cleanedText = this.cleanResponse(response.generated_text)
+        if (response && response.choices && response.choices[0] && response.choices[0].message) {
+          const cleanedText = this.cleanResponse(response.choices[0].message.content)
           const adjustedResponse = this.adjustResponseByPersonality(cleanedText, personality)
 
           logger.info(`✅ HuggingFace API success: ${cleanedText.substring(0, 50)}...`)
@@ -579,6 +573,29 @@ class BertService {
         .replace(/\s+/g, " ")
         .trim()
     )
+  }
+
+  buildSystemPrompt(personality, modelConfig) {
+    const { Empathy = 70, Assertiveness = 60, Humour = 50, Patience = 80, Confidence = 60 } = personality
+
+    const traits = []
+    if (Empathy > 75) traits.push("empathetic and understanding")
+    if (Assertiveness > 75) traits.push("confident and direct")
+    if (Humour > 70) traits.push("friendly with appropriate humor")
+    if (Patience > 80) traits.push("patient and thoughtful")
+    if (Confidence > 75) traits.push("knowledgeable and assured")
+
+    let systemPrompt = "You are a helpful AI assistant."
+    if (traits.length > 0) {
+      systemPrompt = `You are a helpful AI assistant that is ${traits.join(", ")}.`
+    }
+
+    // Add industry context if available
+    if (modelConfig.industry && modelConfig.industry !== "General") {
+      systemPrompt += ` You specialize in ${modelConfig.industry} topics.`
+    }
+
+    return systemPrompt
   }
 
   preprocessInput(message, personality, modelConfig) {
