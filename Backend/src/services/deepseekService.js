@@ -1,4 +1,5 @@
 import dotenv from "dotenv"
+import realAIChatbot from "./realAIChatbot.js"
 
 dotenv.config()
 
@@ -210,46 +211,27 @@ class DeepseekService {
 
   async generateResponse(message, personality = {}) {
     try {
-      if (!this.isInitialized) {
-        console.log("🔄 Service not initialized, attempting initialization...")
-        await this.initialize()
-      }
-
-      if (!this.currentModel || !this.workingEndpoint) {
-        throw new Error("No working model available")
-      }
-
-      console.log(`🤖 Generating response with ${this.currentModel} (${this.apiType} API)`)
-      console.log(`📝 Input: ${message.substring(0, 50)}...`)
-
-      if (this.apiType === "inference") {
-        return await this.generateInferenceResponse(message, personality)
-      } else {
-        return await this.generateDirectResponse(message, personality)
+      console.log(`🤖 Generating REAL AI response for: ${message.substring(0, 50)}...`)
+      
+      // Use the real AI chatbot that can answer ANY question
+      const aiResponse = await realAIChatbot.generateResponse(message, personality)
+      
+      return {
+        text: aiResponse.text,
+        status: "success",
+        model: aiResponse.model || "real-ai",
+        provider: aiResponse.source || "real-ai",
+        confidence: aiResponse.confidence || 0.9,
+        personality: personality,
+        isRealTime: aiResponse.isRealTime || true
       }
     } catch (error) {
       console.error("❌ Response generation failed:", error.message)
 
-      // Try to reinitialize if model failed
-      if (error.message.includes("model") || error.message.includes("provider") || error.message.includes("503")) {
-        console.log("🔄 Model issue detected, trying to reinitialize...")
-        this.isInitialized = false
-        this.currentModel = null
-
-        try {
-          await this.initialize()
-          // Retry once with new model
-          console.log("🔄 Retrying with new model...")
-          return await this.generateResponse(message, personality)
-        } catch (reinitError) {
-          console.error("❌ Reinitialization failed:", reinitError.message)
-        }
-      }
-
       return {
-        text: `I apologize, but I'm having technical difficulties connecting to the AI model. Error: ${error.message}. Please try again in a moment or check your Hugging Face setup.`,
+        text: `I apologize, but I'm having technical difficulties. Please try again in a moment.`,
         status: "error",
-        model: this.currentModel || "none",
+        model: "error",
         provider: "error",
         confidence: 0.1,
         error: error.message,

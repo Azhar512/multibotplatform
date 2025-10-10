@@ -2,6 +2,7 @@ import { HfInference } from "@huggingface/inference"
 import dotenv from "dotenv"
 import { BERT_MODELS, MODEL_CAPABILITIES, FALLBACK_CONFIG } from "../config/models.js"
 import { serviceLogger as logger } from "../config/logger.js"
+import realAIChatbot from "./realAIChatbot.js"
 
 dotenv.config()
 
@@ -166,43 +167,23 @@ class BertService {
     }
 
     try {
-      logger.info(`Generating response for message: ${message}`)
+      logger.info(`Generating REAL AI response for message: ${message}`)
       
-      // Try HuggingFace API first
-      if (this.initialized && this.hf) {
-        const model = await this.loadModel(modelName)
-        const response = await this.handleTextGeneration(message, model, null)
-        
-        if (!response.usedFallback) {
-          const adjustedResponse = this.adjustResponseByPersonality(response.answer, personality)
-
-          return {
-            original: response.answer,
-            adjusted: adjustedResponse,
-            confidence: response.confidence || 0.8,
-            model: modelName,
-            effectiveModel: model.effectiveModel || modelName,
-            industry: 'General',
-            capabilities: MODEL_CAPABILITIES[modelName] || [],
-            usedFallback: false,
-            source: 'huggingface'
-          }
-        }
-      }
-
-      // If HuggingFace fails, use intelligent response with real knowledge
-      const intelligentResponse = this.generateIntelligentResponse(message, personality)
+      // Use the real AI chatbot that can answer ANY question
+      const aiResponse = await realAIChatbot.generateResponse(message, personality)
       
+      const adjustedResponse = this.adjustResponseByPersonality(aiResponse.text, personality)
+
       return {
-        original: intelligentResponse,
-        adjusted: intelligentResponse,
-        confidence: 0.8,
+        original: aiResponse.text,
+        adjusted: adjustedResponse,
+        confidence: aiResponse.confidence || 0.9,
         model: modelName,
-        effectiveModel: 'intelligent-response',
+        effectiveModel: aiResponse.model || 'real-ai',
         industry: 'General',
         capabilities: MODEL_CAPABILITIES[modelName] || [],
-        usedFallback: true,
-        source: 'intelligent'
+        usedFallback: !aiResponse.isRealTime,
+        source: aiResponse.source || 'real-ai'
       }
     } catch (error) {
       logger.error("Error generating response:", error)

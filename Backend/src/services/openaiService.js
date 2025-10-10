@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import PersonalityProcessor from '../utils/personalityProcessor.js';
 import axios from 'axios';
-// Remove the import that was causing issues
+import realAIChatbot from './realAIChatbot.js';
 
 class OpenAIService {
   constructor() {
@@ -58,33 +58,17 @@ class OpenAIService {
 
   async generateResponse(text, personalitySettings, modelType = 'gpt-4-turbo') {
     try {
-      // Use the original OpenAI service logic
-      if (!this.openai) {
-        throw new Error('OpenAI API key not configured');
-      }
-
-      const completion = await this.openai.chat.completions.create({
-        model: modelType,
-        messages: [
-          {
-            role: 'system',
-            content: this.buildSystemPrompt(personalitySettings)
-          },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
-        max_tokens: 150,
-        temperature: 0.7
-      });
-
+      console.log(`🤖 Generating REAL AI response for: ${text.substring(0, 50)}...`)
+      
+      // Use the real AI chatbot that can answer ANY question
+      const aiResponse = await realAIChatbot.generateResponse(text, personalitySettings);
+      
       return {
-        text: completion.choices[0].message.content,
-        confidence: this.calculateConfidence(completion),
+        text: aiResponse.text,
+        confidence: aiResponse.confidence || 0.9,
         sentiment: 0.5,
-        usedFallback: false,
-        source: 'openai'
+        usedFallback: !aiResponse.isRealTime,
+        source: aiResponse.source || 'real-ai'
       };
     } catch (error) {
       console.error('Response Generation Error:', error);
