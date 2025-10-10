@@ -2,7 +2,6 @@ import { HfInference } from "@huggingface/inference"
 import dotenv from "dotenv"
 import { BERT_MODELS, MODEL_CAPABILITIES, FALLBACK_CONFIG } from "../config/models.js"
 import { serviceLogger as logger } from "../config/logger.js"
-import realAIChatbot from "./realAIChatbot.js"
 
 dotenv.config()
 

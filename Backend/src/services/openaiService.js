@@ -1,7 +1,6 @@
 import { OpenAI } from 'openai';
 import PersonalityProcessor from '../utils/personalityProcessor.js';
 import axios from 'axios';
-import realAIChatbot from './realAIChatbot.js';
 
 class OpenAIService {
   constructor() {

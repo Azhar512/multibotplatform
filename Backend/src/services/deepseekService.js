@@ -1,5 +1,4 @@
 import dotenv from "dotenv"
-import realAIChatbot from "./realAIChatbot.js"
 
 dotenv.config()
 
