@@ -167,38 +167,170 @@ class BertService {
     }
 
     try {
-      logger.info(`Generating REAL AI response for message: ${message}`)
+      logger.info(`Generating REAL HuggingFace AI response for message: ${message}`)
       
-      // Use the real AI chatbot that can answer ANY question
-      const aiResponse = await realAIChatbot.generateResponse(message, personality)
-      
-      const adjustedResponse = this.adjustResponseByPersonality(aiResponse.text, personality)
+      // Try to use REAL HuggingFace API first
+      if (this.initialized && this.hf) {
+        const modelConfig = await this.loadModel(modelName)
+        const effectiveModel = modelConfig.effectiveModel
+        
+        logger.info(`Using HuggingFace model: ${effectiveModel}`)
+        
+        const response = await this.hf.textGeneration({
+          model: effectiveModel,
+          inputs: this.preprocessInput(message, personality, modelConfig),
+          parameters: {
+            max_new_tokens: 150,
+            temperature: 0.7,
+            top_p: 0.9,
+            do_sample: true,
+            return_full_text: false,
+            repetition_penalty: 1.1,
+          },
+        })
 
+        if (response && response.generated_text) {
+          const cleanedText = this.cleanResponse(response.generated_text)
+          const adjustedResponse = this.adjustResponseByPersonality(cleanedText, personality)
+
+          logger.info(`✅ HuggingFace API success: ${cleanedText.substring(0, 50)}...`)
+
+          return {
+            original: cleanedText,
+            adjusted: adjustedResponse,
+            confidence: 0.9,
+            model: modelName,
+            effectiveModel: effectiveModel,
+            industry: modelConfig.industry || 'General',
+            capabilities: MODEL_CAPABILITIES[modelName] || [],
+            usedFallback: false,
+            source: 'huggingface'
+          }
+        }
+      }
+
+      // If HuggingFace fails, try OpenAI if available
+      if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-test-key') {
+        try {
+          const openaiResponse = await this.callOpenAI(message, personality)
+          if (openaiResponse && openaiResponse.text) {
+            const adjustedResponse = this.adjustResponseByPersonality(openaiResponse.text, personality)
+            
+            return {
+              original: openaiResponse.text,
+              adjusted: adjustedResponse,
+              confidence: 0.9,
+              model: modelName,
+              effectiveModel: 'gpt-3.5-turbo',
+              industry: 'General',
+              capabilities: MODEL_CAPABILITIES[modelName] || [],
+              usedFallback: false,
+              source: 'openai'
+            }
+          }
+        } catch (openaiError) {
+          logger.warn("OpenAI API failed:", openaiError.message)
+        }
+      }
+
+      // Only use intelligent response as last resort
+      logger.warn("All AI APIs failed, using intelligent response")
+      const intelligentResponse = this.generateIntelligentResponse(message, personality)
+      const adjustedResponse = this.adjustResponseByPersonality(intelligentResponse, personality)
+      
       return {
-        original: aiResponse.text,
+        original: intelligentResponse,
         adjusted: adjustedResponse,
-        confidence: aiResponse.confidence || 0.9,
+        confidence: 0.7,
         model: modelName,
-        effectiveModel: aiResponse.model || 'real-ai',
+        effectiveModel: 'intelligent-response',
         industry: 'General',
         capabilities: MODEL_CAPABILITIES[modelName] || [],
-        usedFallback: !aiResponse.isRealTime,
-        source: aiResponse.source || 'real-ai'
+        usedFallback: true,
+        source: 'intelligent'
       }
     } catch (error) {
       logger.error("Error generating response:", error)
 
-      // Fallback to intelligent response if real AI fails
+      // Fallback to intelligent response if everything fails
       const intelligentResponse = this.generateIntelligentResponse(message, personality)
+      const adjustedResponse = this.adjustResponseByPersonality(intelligentResponse, personality)
       
       return {
         original: intelligentResponse,
-        adjusted: intelligentResponse,
+        adjusted: adjustedResponse,
         confidence: 0.7,
         model: modelName,
+        effectiveModel: 'intelligent-fallback',
+        industry: 'General',
+        capabilities: MODEL_CAPABILITIES[modelName] || [],
         usedFallback: true,
+        source: 'intelligent'
       }
     }
+  }
+
+  async callOpenAI(message, personality) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: this.buildSystemPrompt(personality)
+            },
+            {
+              role: 'user',
+              content: message
+            }
+          ],
+          max_tokens: 150,
+          temperature: 0.7
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.choices && data.choices[0] && data.choices[0].message) {
+        return {
+          text: data.choices[0].message.content,
+          confidence: 0.9,
+          model: 'gpt-3.5-turbo',
+          source: 'openai'
+        }
+      }
+
+      throw new Error('No valid response from OpenAI API')
+    } catch (error) {
+      logger.error('OpenAI API Error:', error)
+      throw error
+    }
+  }
+
+  buildSystemPrompt(personality) {
+    const { Empathy = 70, Assertiveness = 60, Humour = 50, Patience = 80, Confidence = 60 } = personality;
+    
+    let prompt = "You are a helpful AI assistant.";
+    
+    if (Empathy > 75) prompt += " You are empathetic and understanding.";
+    if (Assertiveness > 75) prompt += " You are confident and direct in your responses.";
+    if (Humour > 70) prompt += " You have a friendly sense of humor and can be lighthearted when appropriate.";
+    if (Patience > 80) prompt += " You are patient and thoughtful in your responses.";
+    if (Confidence > 75) prompt += " You are knowledgeable and assured in your answers.";
+    
+    prompt += " Provide helpful, accurate, and engaging responses to any question or request.";
+    
+    return prompt;
   }
 
   async handleTextGeneration(input, modelConfig, signal) {
