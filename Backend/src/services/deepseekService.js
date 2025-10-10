@@ -22,85 +22,80 @@ class DeepseekService {
   }
 
   async testModelAPI(modelName, testInput = "Hello") {
-    console.log(`🧪 Testing model: ${modelName}`)
-
-    const endpoint = this.getApiEndpoint(modelName)
-    console.log(`🔗 Using endpoint: ${endpoint}`)
+    console.log(`🧪 Testing model: ${modelName} with chat completion`)
 
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: testInput,
-          parameters: {
-            max_new_tokens: 30,
-            temperature: 0.7,
-            do_sample: true,
-            return_full_text: false,
-          },
-          options: {
-            wait_for_model: true,
-            use_cache: false,
-          },
-        }),
-      })
+      // Use chat completion API for testing
+      const { HfInference } = await import('@huggingface/inference');
+      const hf = new HfInference(this.apiKey);
+      
+      const response = await hf.chatCompletion({
+        model: modelName,
+        messages: [
+          { role: "user", content: testInput }
+        ],
+        max_tokens: 50,
+        temperature: 0.7,
+      });
 
-      console.log(`📊 Response status: ${response.status}`)
+      console.log(`📊 Model response received`)
 
-      if (response.status === 200) {
-        const data = await response.json()
-        console.log(`📄 Raw response:`, data)
-
-        let responseText = ""
-        if (Array.isArray(data)) {
-          responseText = data[0]?.generated_text || ""
-        } else if (data.generated_text) {
-          responseText = data.generated_text
-        }
-
+      if (response && response.choices && response.choices[0] && response.choices[0].message) {
+        const responseText = response.choices[0].message.content
+        
         if (responseText && responseText.length > 5) {
           console.log(`✅ Model ${modelName} works! Response: ${responseText.substring(0, 100)}...`)
           return {
             success: true,
             model: modelName,
             response: responseText,
-            endpoint: endpoint,
-            apiType: "inference",
+            endpoint: `https://api-inference.huggingface.co/models/${modelName}`,
+            apiType: "chat-completion",
           }
         } else {
           console.log(`❌ Model ${modelName} returned empty response`)
           return { success: false, error: "Empty response" }
         }
-      } else if (response.status === 503) {
-        console.log(`⏳ Model ${modelName} is loading...`)
-        const errorData = await response.json().catch(() => ({}))
-        console.log(`📄 Loading info:`, errorData)
-
-        if (errorData.estimated_time) {
-          console.log(`⏱️ Estimated loading time: ${errorData.estimated_time} seconds`)
-          console.log(`🔄 Waiting for model to load...`)
-
-          // Wait for the estimated time + buffer
-          const waitTime = Math.min(errorData.estimated_time * 1000 + 10000, 60000) // Max 60 seconds
-          await new Promise((resolve) => setTimeout(resolve, waitTime))
-
-          // Retry once
-          console.log(`🔄 Retrying ${modelName} after waiting...`)
-          return await this.testModelAPI(modelName, testInput)
-        }
-
-        return { success: false, error: "Model loading" }
       } else {
-        const errorText = await response.text()
-        console.log(`❌ Model ${modelName} failed: ${response.status} - ${errorText}`)
-        return { success: false, error: `HTTP ${response.status}: ${errorText}` }
+        console.log(`❌ Model ${modelName} returned invalid response structure`)
+        return { success: false, error: "Invalid response structure" }
       }
     } catch (error) {
       console.log(`❌ Model ${modelName} error: ${error.message}`)
+      
+      // If it's a 503 (model loading), wait and retry once
+      if (error.message && error.message.includes('503')) {
+        console.log(`⏳ Model ${modelName} is loading, waiting 10 seconds and retrying...`)
+        await new Promise((resolve) => setTimeout(resolve, 10000))
+        
+        try {
+          console.log(`🔄 Retrying ${modelName}...`)
+          const { HfInference } = await import('@huggingface/inference');
+          const hf = new HfInference(this.apiKey);
+          
+          const retryResponse = await hf.chatCompletion({
+            model: modelName,
+            messages: [{ role: "user", content: testInput }],
+            max_tokens: 50,
+            temperature: 0.7,
+          });
+
+          if (retryResponse && retryResponse.choices && retryResponse.choices[0]) {
+            const responseText = retryResponse.choices[0].message.content
+            console.log(`✅ Model ${modelName} works after retry!`)
+            return {
+              success: true,
+              model: modelName,
+              response: responseText,
+              endpoint: `https://api-inference.huggingface.co/models/${modelName}`,
+              apiType: "chat-completion",
+            }
+          }
+        } catch (retryError) {
+          console.log(`❌ Retry failed: ${retryError.message}`)
+        }
+      }
+      
       return { success: false, error: error.message }
     }
   }
