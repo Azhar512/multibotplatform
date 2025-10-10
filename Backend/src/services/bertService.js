@@ -13,13 +13,13 @@ class BertService {
     this.hf = null
     this.fallbackModel = "bert-base-uncased"
 
-    // Model mappings - Use working models
+    // Model mappings - Use actually available models on HuggingFace Inference API
     this.modelMappings = {
-      "bert-base-uncased": "microsoft/DialoGPT-small",
-      "bert-large-uncased": "microsoft/DialoGPT-medium",
-      "bert-base-cased": "microsoft/DialoGPT-small",
-      "bert-large-cased": "microsoft/DialoGPT-medium",
-      "distilbert-base-uncased": "microsoft/DialoGPT-small",
+      "bert-base-uncased": "google/flan-t5-base",
+      "bert-large-uncased": "google/flan-t5-large",
+      "bert-base-cased": "google/flan-t5-base",
+      "bert-large-cased": "google/flan-t5-large",
+      "distilbert-base-uncased": "google/flan-t5-small",
     }
   }
 
@@ -62,8 +62,8 @@ class BertService {
 
   async testConnection() {
     try {
-      // Test with a simple, reliable model
-      const testModel = "microsoft/DialoGPT-small"
+      // Test with a simple, reliable model that's actually available
+      const testModel = "google/flan-t5-small"
       logger.info(`Testing connection with model: ${testModel}`)
 
       const testResponse = await this.hf.textGeneration({

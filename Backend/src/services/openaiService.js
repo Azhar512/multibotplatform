@@ -141,7 +141,7 @@ class OpenAIService {
 
   async callHuggingFace(message, personality) {
     try {
-      const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', {
+      const response = await fetch('https://api-inference.huggingface.co/models/google/flan-t5-base', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
@@ -173,7 +173,7 @@ class OpenAIService {
         return {
           text: this.cleanResponse(data[0].generated_text),
           confidence: 0.9,
-          model: 'microsoft/DialoGPT-medium',
+          model: 'google/flan-t5-base',
           source: 'huggingface'
         }
       }

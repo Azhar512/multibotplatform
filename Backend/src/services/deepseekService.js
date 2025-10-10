@@ -116,34 +116,18 @@ class DeepseekService {
 
     // Updated list of models that actually work with HF Inference API
     const models = [
-      // Working text generation models
-      "microsoft/DialoGPT-small",
-      "microsoft/DialoGPT-medium", 
-      "microsoft/DialoGPT-large",
+      // Actually available T5 models (prioritize these)
+      "google/flan-t5-base",
+      "google/flan-t5-small",
+      "google/flan-t5-large",
       
-      // Working conversational models
-      "facebook/blenderbot-400M-distill",
-      "facebook/blenderbot-1B-distill",
-      
-      // Working GPT models
+      // Try GPT models
       "gpt2",
       "distilgpt2",
       
-      // Working T5 models
-      "google/flan-t5-small",
-      "google/flan-t5-base",
-      
-      // Working OPT models
+      // Try OPT models
       "facebook/opt-125m",
-      "facebook/opt-350m",
-      
-      // Working EleutherAI models
-      "EleutherAI/gpt-neo-125M",
-      "EleutherAI/gpt-neo-1.3B",
-      
-      // Working smaller models
-      "distilbert-base-uncased",
-      "bert-base-uncased"
+      "facebook/opt-350m"
     ]
 
     console.log("🎯 Testing Hugging Face Inference API models...")
